@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import AdmittingNavSide from '@/components/AdmittingNavSide';
 import api from '@/services/api';
+import { getPortalUrl, getApiAssetUrl } from '@/utils/urlReplace';
 
 const EditPatient = () => {
   const { id } = useParams();
@@ -382,7 +383,7 @@ const EditPatient = () => {
                 <div>
                   <h3 className="text-sm font-medium text-blue-900">Patient QR Code & Portal</h3>
                   <p className="text-sm text-blue-700">QR Code ID: {qrData.qr?.qrcode || 'N/A'}</p>
-                  <p className="text-sm text-blue-700">Portal URL: {qrData.portal_url?.replace('http://a.view:8080', 'http://localhost:5173') || 'N/A'}</p>
+                  <p className="text-sm text-blue-700">Portal URL: {getPortalUrl(qrData.portal_url) || 'N/A'}</p>
                   <p className="text-sm text-blue-700">
                     Portal Expires: {qrData.portal?.expires_at ? new Date(qrData.portal.expires_at).toLocaleDateString() : 'N/A'}
                   </p>
@@ -648,7 +649,7 @@ const EditPatient = () => {
             <div className="flex justify-end gap-2">
               <button
                 type="button"
-                onClick={() => navigate(`/admitting/patients`)}
+                onClick={() => navigate(`/admitting/patient-list`)}
                 className="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600"
               >
                 Cancel
@@ -673,7 +674,7 @@ const EditPatient = () => {
             <div className="text-center">
               {qrData.qr_image_url ? (
                 <img 
-                  src={`${import.meta.env.VITE_API_URL}${qrData.qr_image_url}`}
+                  src={getApiAssetUrl(qrData.qr_image_url)}
                   alt="Patient QR Code" 
                   className="mx-auto mb-4 border rounded"
                   onError={(e) => {
@@ -690,7 +691,7 @@ const EditPatient = () => {
                 <span className="text-gray-500">QR Code not available</span>
               </div>
               <p className="text-sm text-gray-600 mb-2">
-                Portal URL: {qrData.portal_url?.replace('http://a.view:8080', 'http://localhost:5173') || 'N/A'}
+                Portal URL: {getPortalUrl(qrData.portal_url) || 'N/A'}
               </p>
               <p className="text-sm text-gray-600 mb-2">
                 QR Code: {qrData.qr?.qrcode || 'Not available'}
@@ -700,7 +701,7 @@ const EditPatient = () => {
               </p>
               {qrData.portal_url && (
                 <a 
-                  href={qrData.portal_url?.replace('http://a.view:8080', 'http://localhost:5173')} 
+                  href={getPortalUrl(qrData.portal_url)} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="inline-block mt-2 text-blue-600 hover:text-blue-800 text-sm"
