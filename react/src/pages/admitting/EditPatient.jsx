@@ -382,7 +382,7 @@ const EditPatient = () => {
                 <div>
                   <h3 className="text-sm font-medium text-blue-900">Patient QR Code & Portal</h3>
                   <p className="text-sm text-blue-700">QR Code ID: {qrData.qr?.qrcode || 'N/A'}</p>
-                  <p className="text-sm text-blue-700">Portal URL: {qrData.portal_url || 'N/A'}</p>
+                  <p className="text-sm text-blue-700">Portal URL: {qrData.portal_url?.replace('http://a.view:8080', 'http://localhost:5173') || 'N/A'}</p>
                   <p className="text-sm text-blue-700">
                     Portal Expires: {qrData.portal?.expires_at ? new Date(qrData.portal.expires_at).toLocaleDateString() : 'N/A'}
                   </p>
