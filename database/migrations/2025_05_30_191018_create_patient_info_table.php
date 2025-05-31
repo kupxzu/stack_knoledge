@@ -18,9 +18,9 @@ return new class extends Migration
             $table->string('middle_name')->nullable();
             $table->string('suffix')->nullable();
             $table->enum('gender', ['male', 'female', 'others']);
+            $table->enum('civil_status', ['single', 'married', 'widowed', 'divorced', 'separated']);
             $table->date('dob');
             $table->string('contact_number');
-            $table->string('national_id_number')->nullable();
             $table->datetime('admitted_date');
             $table->timestamp('DateCreated');
             $table->string('CreatedBy');

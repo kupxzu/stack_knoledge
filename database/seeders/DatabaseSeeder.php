@@ -40,7 +40,6 @@ class DatabaseSeeder extends Seeder
             PatientAddressSeeder::class,
             PatientRoomSeeder::class,
             PatientPhysicianSeeder::class,
-            PatientDiagnosisSeeder::class,
             PatientSeeder::class,
         ]);
     }

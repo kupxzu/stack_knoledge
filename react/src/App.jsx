@@ -16,13 +16,29 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
+            path="/admin"
+              element={
+              <ProtectedRoute allowRoles={['admin']}>
                 <Dashboard />
               </ProtectedRoute>
-            } 
-          />
+              }
+              />
+          <Route 
+            path="/admitting"
+              element={
+              <ProtectedRoute allowRoles={['admitting']}>
+                <Dashboard />
+              </ProtectedRoute>
+              }
+              />
+          <Route 
+            path="/billing"
+              element={
+              <ProtectedRoute allowRoles={['billing']}>
+                <Dashboard />
+              </ProtectedRoute>
+              }
+              />
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Routes>
         <PWAInstallPrompt />

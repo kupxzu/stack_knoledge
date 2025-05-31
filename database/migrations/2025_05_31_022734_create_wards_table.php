@@ -11,14 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('patient_diagnosis', function (Blueprint $table) {
+        Schema::create('wards', function (Blueprint $table) {
             $table->id();
-            $table->string('diagnosis_name');
-            $table->text('description')->nullable();
-            $table->timestamp('DateCreated');
-            $table->string('CreatedBy');
-            $table->timestamp('DateModified')->nullable();
-            $table->string('ModifiedBy')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('patient_diagnosis');
+        Schema::dropIfExists('wards');
     }
 };

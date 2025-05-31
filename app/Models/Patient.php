@@ -8,12 +8,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Patient extends Model
 {
     protected $fillable = [
-        'medical_rec_no',
         'ptinfo_id',
         'ptaddress_id',
         'ptroom_id',
         'ptphysician_id',
-        'ptdiagnosis_id',
         'DateCreated',
         'CreatedBy',
         'DateModified',
@@ -45,8 +43,4 @@ class Patient extends Model
         return $this->belongsTo(PatientPhysician::class, 'ptphysician_id');
     }
 
-    public function patientDiagnosis(): BelongsTo
-    {
-        return $this->belongsTo(PatientDiagnosis::class, 'ptdiagnosis_id');
-    }
 }

@@ -17,7 +17,6 @@ class PatientInfo extends Model
         'gender',
         'dob',
         'contact_number',
-        'national_id_number',
         'admitted_date',
         'DateCreated',
         'CreatedBy',

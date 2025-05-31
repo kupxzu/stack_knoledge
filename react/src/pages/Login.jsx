@@ -27,6 +27,19 @@ const Login = () => {
     if (error) setError('');
   };
 
+  const getRoleBasedRoute = (role) => {
+    switch (role) {
+      case 'admin':
+        return '/admin';
+      case 'admitting':
+        return '/admitting';
+      case 'billing':
+        return '/billing';
+      default:
+        return '/dashboard';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -35,7 +48,8 @@ const Login = () => {
     const result = await login(formData);
     
     if (result.success) {
-      navigate('/dashboard');
+      const route = getRoleBasedRoute(result.user.role);
+      navigate(route);
     } else {
       setError(result.error);
     }
