@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\PatientQRTPAController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,9 @@ Route::get('/test', function () {
 Route::post('/login', [UserController::class, 'login']);
 Route::post('/forgot-password', [UserController::class, 'forgotPassword']);
 Route::post('/reset-password', [UserController::class, 'resetPassword']);
+
+// Public patient portal access
+Route::get('/patient-portal/{accessHash}', [PatientQRTPAController::class, 'getPatientPortal']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UserController::class, 'profile']);
@@ -30,4 +34,28 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/patients/{id}', [PatientController::class, 'show']);
     Route::put('/patients/{id}', [PatientController::class, 'update']);
     Route::delete('/patients/{id}', [PatientController::class, 'destroy']);
+    
+    Route::get('/patient-addresses', [PatientController::class, 'getAddresses']);
+    Route::post('/patient-addresses', [PatientController::class, 'storeAddress']);
+    Route::put('/patient-addresses/{id}', [PatientController::class, 'updateAddress']);
+    Route::delete('/patient-addresses/{id}', [PatientController::class, 'destroyAddress']);
+    
+    Route::get('/patient-rooms', [PatientController::class, 'getRooms']);
+    Route::post('/patient-rooms', [PatientController::class, 'storeRoom']);
+    Route::put('/patient-rooms/{id}', [PatientController::class, 'updateRoom']);
+    Route::delete('/patient-rooms/{id}', [PatientController::class, 'destroyRoom']);
+    
+    Route::get('/patient-physicians', [PatientController::class, 'getPhysicians']);
+    Route::post('/patient-physicians', [PatientController::class, 'storePhysician']);
+    Route::put('/patient-physicians/{id}', [PatientController::class, 'updatePhysician']);
+    Route::delete('/patient-physicians/{id}', [PatientController::class, 'destroyPhysician']);
+
+    // Patient QR, Transaction, Portal routes
+    Route::get('/billing/active-patients', [PatientQRTPAController::class, 'getActivePatients']);
+    Route::get('/billing/patients/{id}', [PatientQRTPAController::class, 'getPatientForBilling']);
+    Route::post('/billing/transactions', [PatientQRTPAController::class, 'addTransaction']);
+    Route::post('/billing/patients/{id}/discharge', [PatientQRTPAController::class, 'dischargePatient']);
+    Route::get('/qr-codes/{qrCode}', [PatientQRTPAController::class, 'getQRCode']);
+    
+    Route::post('/patients/{id}/regenerate-qr', [PatientQRTPAController::class, 'regenerateQRAndPortal']);
 });

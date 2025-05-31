@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Patient extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'ptinfo_id',
         'ptaddress_id',
@@ -43,4 +46,28 @@ class Patient extends Model
         return $this->belongsTo(PatientPhysician::class, 'ptphysician_id');
     }
 
+    public function qrCodes()
+    {
+        return $this->hasMany(PatientQR::class);
+    }
+
+    public function activeQR()
+    {
+        return $this->hasOne(PatientQR::class)->where('action', 'active');
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(PatientTransaction::class);
+    }
+
+    public function portal()
+    {
+        return $this->hasOne(PatientPortal::class);
+    }
+
+    public function getTotalAmountAttribute()
+    {
+        return $this->transactions()->sum('amount');
+    }
 }
