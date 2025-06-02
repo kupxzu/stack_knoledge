@@ -1,5 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  MagnifyingGlassIcon,
+  PlusIcon,
+  EyeIcon,
+  PencilIcon,
+  TrashIcon,
+  ChevronUpDownIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  XMarkIcon,
+  AdjustmentsHorizontalIcon
+} from '@heroicons/react/24/outline';
 import AdmittingNavSide from '@/components/AdmittingNavSide';
 import api from '@/services/api';
 
@@ -19,6 +31,7 @@ const AdmitPatientList = () => {
   const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState('DateCreated');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadPatients();
@@ -91,13 +104,15 @@ const AdmitPatientList = () => {
   };
 
   const getSortIcon = (column) => {
-    if (sortBy !== column) return '';
-    return sortOrder === 'asc' ? '↑' : '↓';
+    if (sortBy !== column) return <ChevronUpDownIcon className="w-4 h-4" />;
+    return sortOrder === 'asc' ? 
+      <ChevronUpIcon className="w-4 h-4" /> : 
+      <ChevronDownIcon className="w-4 h-4" />;
   };
 
   const renderPagination = () => {
     const pages = [];
-    const maxVisiblePages = 5;
+    const maxVisiblePages = 3; // Reduced for mobile
     const halfVisible = Math.floor(maxVisiblePages / 2);
     
     let startPage = Math.max(1, pagination.current_page - halfVisible);
@@ -107,25 +122,6 @@ const AdmitPatientList = () => {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
-    if (startPage > 1) {
-      pages.push(
-        <button
-          key={1}
-          onClick={() => handlePageChange(1)}
-          className="px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-50"
-        >
-          1
-        </button>
-      );
-      if (startPage > 2) {
-        pages.push(
-          <span key="start-ellipsis" className="px-3 py-2 text-sm text-gray-500">
-            ...
-          </span>
-        );
-      }
-    }
-
     for (let i = startPage; i <= endPage; i++) {
       pages.push(
         <button
@@ -133,8 +129,8 @@ const AdmitPatientList = () => {
           onClick={() => handlePageChange(i)}
           className={`px-3 py-2 text-sm border ${
             i === pagination.current_page
-              ? 'bg-blue-500 text-white border-blue-500'
-              : 'bg-white border-gray-300 hover:bg-gray-50'
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
           }`}
         >
           {i}
@@ -142,129 +138,237 @@ const AdmitPatientList = () => {
       );
     }
 
-    if (endPage < pagination.last_page) {
-      if (endPage < pagination.last_page - 1) {
-        pages.push(
-          <span key="end-ellipsis" className="px-3 py-2 text-sm text-gray-500">
-            ...
-          </span>
-        );
-      }
-      pages.push(
-        <button
-          key={pagination.last_page}
-          onClick={() => handlePageChange(pagination.last_page)}
-          className="px-3 py-2 text-sm bg-white border border-gray-300 hover:bg-gray-50"
-        >
-          {pagination.last_page}
-        </button>
-      );
-    }
-
     return pages;
   };
 
+  const PatientCard = ({ patient }) => (
+    <div className="bg-white border border-gray-200 rounded-lg p-4 mb-4 shadow-sm">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="font-medium text-gray-900">
+            {patient.patient_info?.first_name} {patient.patient_info?.middle_name} {patient.patient_info?.last_name} {patient.patient_info?.suffix}
+          </h3>
+          <p className="text-sm text-gray-500">ID: #{patient.id}</p>
+        </div>
+        <div className="flex space-x-2">
+          <Link
+            to={`/admitting/patients/${patient.id}`}
+            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded"
+          >
+            <EyeIcon className="w-4 h-4" />
+          </Link>
+          <Link
+            to={`/admitting/patients/${patient.id}/edit`}
+            className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded"
+          >
+            <PencilIcon className="w-4 h-4" />
+          </Link>
+          <button
+            onClick={() => deletePatient(patient.id)}
+            className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+          >
+            <TrashIcon className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <div>
+          <span className="text-gray-500">Contact:</span>
+          <p className="font-medium">{patient.patient_info?.contact_number || 'N/A'}</p>
+        </div>
+        <div>
+          <span className="text-gray-500">Room:</span>
+          <p className="font-medium">{patient.patient_room?.room_name || 'N/A'}</p>
+        </div>
+        <div>
+          <span className="text-gray-500">Physician:</span>
+          <p className="font-medium">
+            Dr. {patient.patient_physician?.first_name} {patient.patient_physician?.last_name}
+          </p>
+        </div>
+        <div>
+          <span className="text-gray-500">Admitted:</span>
+          <p className="font-medium">{new Date(patient.DateCreated).toLocaleDateString()}</p>
+        </div>
+      </div>
+
+      {patient.patient_address?.address && (
+        <div className="mt-3 text-sm">
+          <span className="text-gray-500">Address:</span>
+          <p className="font-medium truncate">{patient.patient_address.address}</p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <AdmittingNavSide>
-      <div className="bg-white overflow-hidden shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg font-medium text-gray-900">Patient List</h2>
-            <Link
-              to="/admitting/admit-patient"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Add New Patient
-            </Link>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-semibold text-gray-900">Patient List</h1>
+          <Link
+            to="/admitting/admit-patient"
+            className="mt-3 sm:mt-0 inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <PlusIcon className="w-4 h-4 mr-2" />
+            Add Patient
+          </Link>
+        </div>
+
+        {/* Message */}
+        {message && (
+          <div className={`p-4 rounded-lg ${
+            message.includes('successfully') 
+              ? 'bg-green-50 text-green-700 border border-green-200' 
+              : 'bg-red-50 text-red-700 border border-red-200'
+          }`}>
+            {message}
           </div>
+        )}
 
-          {message && (
-            <div className={`mb-4 p-3 rounded ${
-              message.includes('successfully') 
-                ? 'bg-green-50 text-green-700' 
-                : 'bg-red-50 text-red-700'
-            }`}>
-              {message}
-            </div>
-          )}
-
-          <div className="mb-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <form onSubmit={handleSearch} className="flex gap-2">
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search patients..."
-                className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <button
-                type="submit"
-                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
-              >
-                Search
-              </button>
-              {search && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearch('');
-                    setSearchInput('');
-                  }}
-                  className="bg-gray-300 text-gray-700 px-3 py-2 rounded hover:bg-gray-400"
-                >
-                  Clear
-                </button>
-              )}
+        {/* Search and Filters */}
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="space-y-4">
+            {/* Search Bar */}
+            <form onSubmit={handleSearch} className="relative">
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  placeholder="Search patients by name, ID, or contact..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch('');
+                      setSearchInput('');
+                    }}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <XMarkIcon className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </form>
 
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Show:</label>
-              <select
-                value={pagination.per_page}
-                onChange={(e) => handlePerPageChange(parseInt(e.target.value))}
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
+            {/* Filter Toggle - Mobile */}
+            <div className="flex items-center justify-between lg:hidden">
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-              <span className="text-sm text-gray-600">per page</span>
+                <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
+                Filters
+              </button>
+              <span className="text-sm text-gray-500">
+                {pagination.total} patients
+              </span>
             </div>
-          </div>
 
-          {loading ? (
-            <div className="flex justify-center items-center py-8">
-              <div className="text-gray-500">Loading patients...</div>
-            </div>
-          ) : (
-            <>
-              <div className="mb-4 text-sm text-gray-600">
-                Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total} entries
-                {search && ` (filtered from total entries)`}
+            {/* Filters */}
+            <div className={`${showFilters || 'hidden'} lg:flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0 lg:space-x-4`}>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="DateCreated">Sort by Date</option>
+                  <option value="patient_name">Sort by Name</option>
+                  <option value="id">Sort by ID</option>
+                </select>
+
+                <select
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="desc">Newest First</option>
+                  <option value="asc">Oldest First</option>
+                </select>
               </div>
 
+              <div className="flex items-center space-x-2">
+                <label className="text-sm text-gray-600">Show:</label>
+                <select
+                  value={pagination.per_page}
+                  onChange={(e) => handlePerPageChange(parseInt(e.target.value))}
+                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Results Info - Desktop */}
+            <div className="hidden lg:flex justify-between items-center text-sm text-gray-600">
+              <span>
+                Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total} patients
+                {search && ' (filtered)'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="bg-white rounded-lg border border-gray-200 p-8">
+            <div className="flex justify-center items-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-3 text-gray-600">Loading patients...</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Mobile Cards View */}
+            <div className="lg:hidden">
+              {patients.length === 0 ? (
+                <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                  <p className="text-gray-500">
+                    {search ? 'No patients found matching your search.' : 'No patients found.'}
+                  </p>
+                </div>
+              ) : (
+                patients.map((patient) => (
+                  <PatientCard key={patient.id} patient={patient} />
+                ))
+              )}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block bg-white rounded-lg border border-gray-200 overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
                       <th
                         onClick={() => handleSort('id')}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                       >
-                        ID {getSortIcon('id')}
+                        <div className="flex items-center space-x-1">
+                          <span>ID</span>
+                          {getSortIcon('id')}
+                        </div>
                       </th>
                       <th
                         onClick={() => handleSort('patient_name')}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                       >
-                        Patient Name {getSortIcon('patient_name')}
+                        <div className="flex items-center space-x-1">
+                          <span>Patient</span>
+                          {getSortIcon('patient_name')}
+                        </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Contact
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Address
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Room
@@ -274,9 +378,12 @@ const AdmitPatientList = () => {
                       </th>
                       <th
                         onClick={() => handleSort('DateCreated')}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                       >
-                        Admitted Date {getSortIcon('DateCreated')}
+                        <div className="flex items-center space-x-1">
+                          <span>Admitted</span>
+                          {getSortIcon('DateCreated')}
+                        </div>
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -286,7 +393,7 @@ const AdmitPatientList = () => {
                   <tbody className="bg-white divide-y divide-gray-200">
                     {patients.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                        <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                           {search ? 'No patients found matching your search.' : 'No patients found.'}
                         </td>
                       </tr>
@@ -305,15 +412,10 @@ const AdmitPatientList = () => {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {patient.patient_info?.contact_number}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-900">
-                            <div className="max-w-xs truncate">
-                              {patient.patient_address?.address}
-                            </div>
+                            {patient.patient_info?.contact_number || 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <div>{patient.patient_room?.room_name}</div>
+                            <div>{patient.patient_room?.room_name || 'N/A'}</div>
                             <div className="text-xs text-gray-500">{patient.patient_room?.description}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -323,24 +425,24 @@ const AdmitPatientList = () => {
                             {new Date(patient.DateCreated).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex gap-2">
+                            <div className="flex space-x-2">
                               <Link
                                 to={`/admitting/patients/${patient.id}`}
                                 className="text-blue-600 hover:text-blue-900"
                               >
-                                View
+                                <EyeIcon className="w-4 h-4" />
                               </Link>
                               <Link
                                 to={`/admitting/patients/${patient.id}/edit`}
                                 className="text-indigo-600 hover:text-indigo-900"
                               >
-                                Edit
+                                <PencilIcon className="w-4 h-4" />
                               </Link>
                               <button
                                 onClick={() => deletePatient(patient.id)}
                                 className="text-red-600 hover:text-red-900"
                               >
-                                Delete
+                                <TrashIcon className="w-4 h-4" />
                               </button>
                             </div>
                           </td>
@@ -350,69 +452,48 @@ const AdmitPatientList = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
 
-              {pagination.last_page > 1 && (
-                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between">
-                  <div className="text-sm text-gray-600 mb-4 sm:mb-0">
+            {/* Pagination */}
+            {pagination.last_page > 1 && (
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+                  <div className="text-sm text-gray-600">
                     Page {pagination.current_page} of {pagination.last_page}
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center space-x-1">
                     <button
                       onClick={() => handlePageChange(1)}
                       disabled={pagination.current_page === 1}
                       className={`px-3 py-2 text-sm border rounded-l ${
                         pagination.current_page === 1
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white border-gray-300 hover:bg-gray-50'
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                          : 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
                       }`}
                     >
                       First
                     </button>
 
-                    <button
-                      onClick={() => handlePageChange(pagination.current_page - 1)}
-                      disabled={pagination.current_page === 1}
-                      className={`px-3 py-2 text-sm border-t border-b ${
-                        pagination.current_page === 1
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      Previous
-                    </button>
-
                     {renderPagination()}
-
-                    <button
-                      onClick={() => handlePageChange(pagination.current_page + 1)}
-                      disabled={pagination.current_page === pagination.last_page}
-                      className={`px-3 py-2 text-sm border-t border-b ${
-                        pagination.current_page === pagination.last_page
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      Next
-                    </button>
 
                     <button
                       onClick={() => handlePageChange(pagination.last_page)}
                       disabled={pagination.current_page === pagination.last_page}
                       className={`px-3 py-2 text-sm border rounded-r ${
                         pagination.current_page === pagination.last_page
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-white border-gray-300 hover:bg-gray-50'
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200'
+                          : 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
                       }`}
                     >
                       Last
                     </button>
                   </div>
                 </div>
-              )}
-            </>
-          )}
-        </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </AdmittingNavSide>
   );
