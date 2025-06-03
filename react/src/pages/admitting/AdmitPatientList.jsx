@@ -12,8 +12,149 @@ import {
   XMarkIcon,
   AdjustmentsHorizontalIcon
 } from '@heroicons/react/24/outline';
+import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 import AdmittingNavSide from '@/components/AdmittingNavSide';
 import api from '@/services/api';
+
+const TableSkeleton = () => (
+  <div className="hidden lg:block bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={30} />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={80} />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={60} />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={50} />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={80} />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={70} />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={60} />
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {[...Array(5)].map((_, index) => (
+            <tr key={index} className="hover:bg-gray-50">
+              <td className="px-6 py-4">
+                <Skeleton height={16} width={40} />
+              </td>
+              <td className="px-6 py-4">
+                <Skeleton height={16} width={150} className="mb-1" />
+                <Skeleton height={14} width={100} />
+              </td>
+              <td className="px-6 py-4">
+                <Skeleton height={16} width={120} />
+              </td>
+              <td className="px-6 py-4">
+                <Skeleton height={16} width={80} className="mb-1" />
+                <Skeleton height={12} width={60} />
+              </td>
+              <td className="px-6 py-4">
+                <Skeleton height={16} width={140} />
+              </td>
+              <td className="px-6 py-4">
+                <Skeleton height={16} width={80} />
+              </td>
+              <td className="px-6 py-4">
+                <div className="flex space-x-2">
+                  <Skeleton height={16} width={16} />
+                  <Skeleton height={16} width={16} />
+                  <Skeleton height={16} width={16} />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+
+const MobileCardsSkeleton = () => (
+  <div className="lg:hidden space-y-4">
+    {[...Array(5)].map((_, index) => (
+      <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+        <div className="flex justify-between items-start mb-3">
+          <div className="flex-1">
+            <Skeleton height={20} width={200} className="mb-1" />
+            <Skeleton height={16} width={60} />
+          </div>
+          <div className="flex space-x-2">
+            <Skeleton height={24} width={24} />
+            <Skeleton height={24} width={24} />
+            <Skeleton height={24} width={24} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <Skeleton height={14} width={50} className="mb-1" />
+            <Skeleton height={16} width={100} />
+          </div>
+          <div>
+            <Skeleton height={14} width={40} className="mb-1" />
+            <Skeleton height={16} width={80} />
+          </div>
+          <div>
+            <Skeleton height={14} width={60} className="mb-1" />
+            <Skeleton height={16} width={120} />
+          </div>
+          <div>
+            <Skeleton height={14} width={50} className="mb-1" />
+            <Skeleton height={16} width={90} />
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <Skeleton height={14} width={50} className="mb-1" />
+          <Skeleton height={16} width="100%" />
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const SearchFiltersSkeleton = () => (
+  <div className="bg-white rounded-lg border border-gray-200 p-4">
+    <div className="space-y-4">
+      <Skeleton height={40} className="rounded-lg" />
+      
+      <div className="flex items-center justify-between lg:hidden">
+        <Skeleton height={32} width={80} className="rounded-lg" />
+        <Skeleton height={16} width={100} />
+      </div>
+
+      <div className="hidden lg:flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0 lg:space-x-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Skeleton height={32} width={120} className="rounded-lg" />
+          <Skeleton height={32} width={120} className="rounded-lg" />
+        </div>
+        <div className="flex items-center space-x-2">
+          <Skeleton height={16} width={40} />
+          <Skeleton height={32} width={60} className="rounded" />
+        </div>
+      </div>
+
+      <div className="hidden lg:flex justify-between items-center">
+        <Skeleton height={16} width={200} />
+      </div>
+    </div>
+  </div>
+);
 
 const AdmitPatientList = () => {
   const [patients, setPatients] = useState([]);
@@ -29,13 +170,12 @@ const AdmitPatientList = () => {
   });
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
-  const [sortBy, setSortBy] = useState('DateCreated');
   const [sortOrder, setSortOrder] = useState('desc');
   const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadPatients();
-  }, [search, sortBy, sortOrder]);
+  }, [search, sortOrder]);
 
   const loadPatients = async (page = 1) => {
     setLoading(true);
@@ -45,7 +185,7 @@ const AdmitPatientList = () => {
           page,
           per_page: pagination.per_page,
           search,
-          sort_by: sortBy,
+          sort_by: 'DateCreated',
           sort_order: sortOrder
         }
       });
@@ -72,15 +212,6 @@ const AdmitPatientList = () => {
     setSearch(searchInput);
   };
 
-  const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(column);
-      setSortOrder('asc');
-    }
-  };
-
   const handlePageChange = (page) => {
     loadPatients(page);
   };
@@ -103,16 +234,9 @@ const AdmitPatientList = () => {
     }
   };
 
-  const getSortIcon = (column) => {
-    if (sortBy !== column) return <ChevronUpDownIcon className="w-4 h-4" />;
-    return sortOrder === 'asc' ? 
-      <ChevronUpIcon className="w-4 h-4" /> : 
-      <ChevronDownIcon className="w-4 h-4" />;
-  };
-
   const renderPagination = () => {
     const pages = [];
-    const maxVisiblePages = 3; // Reduced for mobile
+    const maxVisiblePages = 3;
     const halfVisible = Math.floor(maxVisiblePages / 2);
     
     let startPage = Math.max(1, pagination.current_page - halfVisible);
@@ -228,106 +352,110 @@ const AdmitPatientList = () => {
           </div>
         )}
 
-        {/* Search and Filters */}
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="space-y-4">
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="relative">
-              <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search patients by name, ID, or contact..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                {search && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearch('');
-                      setSearchInput('');
-                    }}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <XMarkIcon className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </form>
-
-            {/* Filter Toggle - Mobile */}
-            <div className="flex items-center justify-between lg:hidden">
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
-                Filters
-              </button>
-              <span className="text-sm text-gray-500">
-                {pagination.total} patients
-              </span>
-            </div>
-
-            {/* Filters */}
-            <div className={`${showFilters || 'hidden'} lg:flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0 lg:space-x-4`}>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="DateCreated">Sort by Date</option>
-                  <option value="patient_name">Sort by Name</option>
-                  <option value="id">Sort by ID</option>
-                </select>
-
-                <select
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="desc">Newest First</option>
-                  <option value="asc">Oldest First</option>
-                </select>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <label className="text-sm text-gray-600">Show:</label>
-                <select
-                  value={pagination.per_page}
-                  onChange={(e) => handlePerPageChange(parseInt(e.target.value))}
-                  className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Results Info - Desktop */}
-            <div className="hidden lg:flex justify-between items-center text-sm text-gray-600">
-              <span>
-                Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total} patients
-                {search && ' (filtered)'}
-              </span>
-            </div>
-          </div>
-        </div>
-
         {/* Content */}
         {loading ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-8">
-            <div className="flex justify-center items-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Loading patients...</span>
+          <SkeletonTheme baseColor="#f3f4f6" highlightColor="#e5e7eb">
+            <div className="space-y-6">
+              <SearchFiltersSkeleton />
+              <MobileCardsSkeleton />
+              <TableSkeleton />
+              
+              {/* Pagination Skeleton */}
+              <div className="bg-white rounded-lg border border-gray-200 p-4">
+                <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
+                  <Skeleton height={16} width={150} />
+                  <div className="flex items-center space-x-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} height={32} width={32} className="rounded" />
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          </SkeletonTheme>
         ) : (
           <>
+            {/* Search and Filters */}
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <div className="space-y-4">
+                {/* Search Bar */}
+                <form onSubmit={handleSearch} className="relative">
+                  <div className="relative">
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder="Search patients by name, ID, or contact..."
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSearch('');
+                          setSearchInput('');
+                        }}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        <XMarkIcon className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </form>
+
+                {/* Filter Toggle - Mobile */}
+                <div className="flex items-center justify-between lg:hidden">
+                  <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
+                    Filters
+                  </button>
+                  <span className="text-sm text-gray-500">
+                    {pagination.total} patients
+                  </span>
+                </div>
+
+                {/* Filters */}
+                <div className={`${showFilters || 'hidden'} lg:flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0 lg:space-x-4`}>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <select
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value)}
+                      className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="desc">Newest First</option>
+                      <option value="asc">Oldest First</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <label className="text-sm text-gray-600">Show:</label>
+                    <select
+                      value={pagination.per_page}
+                      onChange={(e) => handlePerPageChange(parseInt(e.target.value))}
+                      className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Results Info - Desktop */}
+                <div className="hidden lg:flex justify-between items-center text-sm text-gray-600">
+                  <span>
+                    Showing {pagination.from || 0} to {pagination.to || 0} of {pagination.total} patients
+                    {search && ' (filtered)'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
             {/* Mobile Cards View */}
             <div className="lg:hidden">
               {patients.length === 0 ? (
@@ -349,23 +477,8 @@ const AdmitPatientList = () => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th
-                        onClick={() => handleSort('id')}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>ID</span>
-                          {getSortIcon('id')}
-                        </div>
-                      </th>
-                      <th
-                        onClick={() => handleSort('patient_name')}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Patient</span>
-                          {getSortIcon('patient_name')}
-                        </div>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Patient
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Contact
@@ -376,14 +489,8 @@ const AdmitPatientList = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Physician
                       </th>
-                      <th
-                        onClick={() => handleSort('DateCreated')}
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
-                      >
-                        <div className="flex items-center space-x-1">
-                          <span>Admitted</span>
-                          {getSortIcon('DateCreated')}
-                        </div>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Admitted
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Actions
@@ -400,9 +507,7 @@ const AdmitPatientList = () => {
                     ) : (
                       patients.map((patient) => (
                         <tr key={patient.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            #{patient.id}
-                          </td>
+
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">
                               {patient.patient_info?.first_name} {patient.patient_info?.middle_name} {patient.patient_info?.last_name} {patient.patient_info?.suffix}

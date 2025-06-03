@@ -7,10 +7,15 @@ import {
   HomeIcon,
   BuildingOfficeIcon,
   UserIcon,
-  MagnifyingGlassIcon
+  MagnifyingGlassIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import AdmittingNavSide from '@/components/AdmittingNavSide';
 import api from '@/services/api';
+import Skeleton, { SkeletonTheme } from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
+
 
 const AdmittionSetting = () => {
   const [activeTab, setActiveTab] = useState('addresses');
@@ -26,6 +31,14 @@ const AdmittionSetting = () => {
   const [editingItem, setEditingItem] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState({});
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 10,
+    total: 0,
+    last_page: 1,
+    from: 0,
+    to: 0
+  });
 
   const tabs = [
     { id: 'addresses', label: 'Addresses', icon: HomeIcon },
@@ -35,23 +48,41 @@ const AdmittionSetting = () => {
 
   useEffect(() => {
     loadData();
-  }, [activeTab]);
+  }, [activeTab, pagination.current_page, pagination.per_page]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPagination(prev => ({ ...prev, current_page: 1 }));
+      loadData();
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   const loadData = async () => {
     setLoading(true);
     try {
+      const params = new URLSearchParams({
+        page: pagination.current_page,
+        per_page: pagination.per_page,
+        search: searchTerm || ''
+      });
+
       switch (activeTab) {
         case 'addresses':
-          const addressResponse = await api.get('/patient-addresses');
+          const addressResponse = await api.get(`/patient-addresses?${params}`);
           setAddresses(addressResponse.data.data);
+          setPagination(addressResponse.data);
           break;
         case 'rooms':
-          const roomResponse = await api.get('/patient-rooms');
+          const roomResponse = await api.get(`/patient-rooms?${params}`);
           setRooms(roomResponse.data.data);
+          setPagination(roomResponse.data);
           break;
         case 'physicians':
-          const physicianResponse = await api.get('/patient-physicians');
+          const physicianResponse = await api.get(`/patient-physicians?${params}`);
           setPhysicians(physicianResponse.data.data);
+          setPagination(physicianResponse.data);
           break;
       }
       setMessage('');
@@ -157,22 +188,16 @@ const AdmittionSetting = () => {
     }
   };
 
-  const filterData = (data) => {
-    if (!searchTerm) return data;
-    
-    return data.filter(item => {
-      switch (activeTab) {
-        case 'addresses':
-          return item.address?.toLowerCase().includes(searchTerm.toLowerCase());
-        case 'rooms':
-          return item.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                 item.description?.toLowerCase().includes(searchTerm.toLowerCase());
-        case 'physicians':
-          return `${item.first_name} ${item.last_name}`.toLowerCase().includes(searchTerm.toLowerCase());
-        default:
-          return true;
-      }
-    });
+  const handlePageChange = (page) => {
+    setPagination(prev => ({ ...prev, current_page: page }));
+  };
+
+  const handlePerPageChange = (perPage) => {
+    setPagination(prev => ({ 
+      ...prev, 
+      per_page: parseInt(perPage),
+      current_page: 1 
+    }));
   };
 
   const renderForm = () => {
@@ -395,7 +420,7 @@ const AdmittionSetting = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filterData(addresses).map((address) => (
+              {getCurrentData().map((address) => (
                 <tr key={address.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{address.id}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">
@@ -435,7 +460,7 @@ const AdmittionSetting = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filterData(rooms).map((room) => (
+              {getCurrentData().map((room) => (
                 <tr key={room.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{room.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{room.name}</td>
@@ -476,7 +501,7 @@ const AdmittionSetting = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filterData(physicians).map((physician) => (
+              {getCurrentData().map((physician) => (
                 <tr key={physician.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{physician.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -528,7 +553,285 @@ const AdmittionSetting = () => {
     }
   };
 
-  const currentData = filterData(getCurrentData());
+  const PaginationComponent = () => {
+    const startPage = Math.max(1, pagination.current_page - 2);
+    const endPage = Math.min(pagination.last_page, pagination.current_page + 2);
+    const pages = [];
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 mt-6 pt-6 border-t border-gray-200">
+        {/* Results info */}
+        <div className="text-sm text-gray-700">
+          Showing {pagination.from} to {pagination.to} of {pagination.total} results
+        </div>
+
+        {/* Pagination controls */}
+        <div className="flex items-center space-x-4">
+          {/* Per page selector */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-700">Show:</span>
+            <select
+              value={pagination.per_page}
+              onChange={(e) => handlePerPageChange(e.target.value)}
+              className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="5">5</option>
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+            </select>
+          </div>
+
+          {/* Page navigation */}
+          <div className="flex items-center space-x-1">
+            {/* Previous button */}
+            <button
+              onClick={() => handlePageChange(pagination.current_page - 1)}
+              disabled={pagination.current_page === 1}
+              className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeftIcon className="w-4 h-4" />
+            </button>
+
+            {/* First page */}
+            {startPage > 1 && (
+              <>
+                <button
+                  onClick={() => handlePageChange(1)}
+                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  1
+                </button>
+                {startPage > 2 && <span className="px-1">...</span>}
+              </>
+            )}
+
+            {/* Page numbers */}
+            {pages.map(page => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`px-3 py-1 border rounded ${
+                  page === pagination.current_page
+                    ? 'bg-blue-600 text-white border-blue-600'
+                    : 'border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            {/* Last page */}
+            {endPage < pagination.last_page && (
+              <>
+                {endPage < pagination.last_page - 1 && <span className="px-1">...</span>}
+                <button
+                  onClick={() => handlePageChange(pagination.last_page)}
+                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  {pagination.last_page}
+                </button>
+              </>
+            )}
+
+            {/* Next button */}
+            <button
+              onClick={() => handlePageChange(pagination.current_page + 1)}
+              disabled={pagination.current_page === pagination.last_page}
+              className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronRightIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const TableSkeleton = () => (
+    <div className="overflow-x-auto border border-gray-200 rounded-lg">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={30} />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={100} />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={80} />
+            </th>
+            <th className="px-6 py-3 text-left">
+              <Skeleton height={16} width={60} />
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {[...Array(5)].map((_, index) => (
+            <tr key={index} className="hover:bg-gray-50">
+              <td className="px-6 py-4">
+                <Skeleton height={16} width={40} />
+              </td>
+              <td className="px-6 py-4">
+                <Skeleton height={16} width={120} />
+              </td>
+              <td className="px-6 py-4">
+                <Skeleton height={16} width={100} />
+              </td>
+              <td className="px-6 py-4">
+                <div className="flex space-x-2">
+                  <Skeleton height={16} width={16} />
+                  <Skeleton height={16} width={16} />
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+
+  const MobileCardSkeleton = () => (
+    <div className="space-y-3">
+      {[...Array(5)].map((_, index) => (
+        <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+          <div className="flex justify-between items-start">
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-2">
+                <Skeleton height={20} width={150} />
+                <Skeleton height={16} width={40} />
+              </div>
+              <Skeleton height={16} width={200} />
+            </div>
+            <div className="flex space-x-2 ml-3">
+              <Skeleton height={24} width={24} />
+              <Skeleton height={24} width={24} />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  const HeaderSkeleton = () => (
+    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-6">
+      <div className="flex-1 max-w-md">
+        <Skeleton height={40} />
+      </div>
+      <Skeleton height={40} width={120} />
+    </div>
+  );
+
+  const getTabSpecificSkeleton = () => {
+    switch (activeTab) {
+      case 'addresses':
+        return (
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3"><Skeleton height={16} width={30} /></th>
+                    <th className="px-6 py-3"><Skeleton height={16} width={80} /></th>
+                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {[...Array(5)].map((_, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4"><Skeleton height={16} width={40} /></td>
+                      <td className="px-6 py-4"><Skeleton height={16} width={250} count={2} /></td>
+                      <td className="px-6 py-4">
+                        <div className="flex space-x-2">
+                          <Skeleton height={16} width={16} />
+                          <Skeleton height={16} width={16} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      
+      case 'rooms':
+        return (
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3"><Skeleton height={16} width={30} /></th>
+                    <th className="px-6 py-3"><Skeleton height={16} width={100} /></th>
+                    <th className="px-6 py-3"><Skeleton height={16} width={100} /></th>
+                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {[...Array(5)].map((_, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4"><Skeleton height={16} width={40} /></td>
+                      <td className="px-6 py-4"><Skeleton height={16} width={120} /></td>
+                      <td className="px-6 py-4"><Skeleton height={16} width={180} /></td>
+                      <td className="px-6 py-4">
+                        <div className="flex space-x-2">
+                          <Skeleton height={16} width={16} />
+                          <Skeleton height={16} width={16} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+
+      case 'physicians':
+        return (
+          <div className="hidden lg:block">
+            <div className="overflow-x-auto border border-gray-200 rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3"><Skeleton height={16} width={30} /></th>
+                    <th className="px-6 py-3"><Skeleton height={16} width={80} /></th>
+                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
+                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {[...Array(5)].map((_, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4"><Skeleton height={16} width={40} /></td>
+                      <td className="px-6 py-4"><Skeleton height={16} width={200} /></td>
+                      <td className="px-6 py-4"><Skeleton height={16} width={60} /></td>
+                      <td className="px-6 py-4">
+                        <div className="flex space-x-2">
+                          <Skeleton height={16} width={16} />
+                          <Skeleton height={16} width={16} />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+
+      default:
+        return <TableSkeleton />;
+    }
+  };
+
+  const currentData = getCurrentData();
 
   return (
     <AdmittingNavSide>
@@ -624,12 +927,43 @@ const AdmittionSetting = () => {
               </button>
             </div>
 
-            {/* Loading State */}
+            {/* Enhanced Loading State */}
             {loading ? (
-              <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600">Loading {getTabTitle().toLowerCase()}...</span>
-              </div>
+              <SkeletonTheme baseColor="#f3f4f6" highlightColor="#e5e7eb">
+                <div>
+                  {/* Header Skeleton */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-6">
+                    <div className="flex-1 max-w-md">
+                      <Skeleton height={40} className="rounded-lg" />
+                    </div>
+                    <Skeleton height={40} width={140} className="rounded-lg" />
+                  </div>
+
+                  {/* Mobile Cards Skeleton */}
+                  <div className="block lg:hidden">
+                    <MobileCardSkeleton />
+                  </div>
+
+                  {/* Desktop Table Skeleton */}
+                  {getTabSpecificSkeleton()}
+                  
+                  {/* Pagination Skeleton */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 mt-6 pt-6 border-t border-gray-200">
+                    <Skeleton height={20} width={200} />
+                    <div className="flex items-center space-x-4">
+                      <div className="flex items-center space-x-2">
+                        <Skeleton height={32} width={50} />
+                        <Skeleton height={32} width={60} />
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Skeleton key={i} height={32} width={32} className="rounded" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </SkeletonTheme>
             ) : (
               <>
                 {/* Mobile Cards */}
@@ -642,9 +976,12 @@ const AdmittionSetting = () => {
                       </p>
                     </div>
                   ) : (
-                    <div>
-                      {currentData.map((item) => renderMobileCard(item))}
-                    </div>
+                    <>
+                      <div>
+                        {currentData.map((item) => renderMobileCard(item))}
+                      </div>
+                      <PaginationComponent />
+                    </>
                   )}
                 </div>
 
@@ -658,19 +995,14 @@ const AdmittionSetting = () => {
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto border border-gray-200 rounded-lg">
-                      {renderTable()}
-                    </div>
+                    <>
+                      <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                        {renderTable()}
+                      </div>
+                      <PaginationComponent />
+                    </>
                   )}
                 </div>
-
-                {/* Results Count */}
-                {currentData.length > 0 && (
-                  <div className="mt-4 text-sm text-gray-600 text-center lg:text-left">
-                    Showing {currentData.length} of {getCurrentData().length} {getTabTitle().toLowerCase()}
-                    {searchTerm && ' (filtered)'}
-                  </div>
-                )}
               </>
             )}
           </div>

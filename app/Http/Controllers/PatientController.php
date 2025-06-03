@@ -102,6 +102,7 @@ class PatientController extends Controller
 
             DB::beginTransaction();
 
+            // ALWAYS create new patient info (patient-specific data)
             $patientInfo = PatientInfo::create([
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
@@ -116,29 +117,41 @@ class PatientController extends Controller
                 'CreatedBy' => $request->user()->username,
             ]);
 
-            $patientAddress = PatientAddress::create([
-                'address' => $request->address,
-                'DateCreated' => now(),
-                'CreatedBy' => $request->user()->username,
-            ]);
+            // FIND OR CREATE address (reuse existing if found)
+            $patientAddress = PatientAddress::firstOrCreate(
+                ['address' => $request->address],
+                [
+                    'DateCreated' => now(),
+                    'CreatedBy' => $request->user()->username,
+                ]
+            );
 
-            $patientRoom = PatientRoom::create([
-                'room_name' => $request->room_name,
-                'description' => $request->room_description,
-                'DateCreated' => now(),
-                'CreatedBy' => $request->user()->username,
-            ]);
+            // FIND OR CREATE room (reuse existing if found)
+            $patientRoom = PatientRoom::firstOrCreate(
+                ['room_name' => $request->room_name],
+                [
+                    'description' => $request->room_description,
+                    'DateCreated' => now(),
+                    'CreatedBy' => $request->user()->username,
+                ]
+            );
 
-            $patientPhysician = PatientPhysician::create([
-                'first_name' => $request->physician_first_name,
-                'last_name' => $request->physician_last_name,
-                'middle_name' => $request->physician_middle_name,
-                'suffix' => $request->physician_suffix,
-                'gender' => $request->physician_gender,
-                'DateCreated' => now(),
-                'CreatedBy' => $request->user()->username,
-            ]);
+            // FIND OR CREATE physician (reuse existing if found)
+            $patientPhysician = PatientPhysician::firstOrCreate(
+                [
+                    'first_name' => $request->physician_first_name,
+                    'last_name' => $request->physician_last_name,
+                    'middle_name' => $request->physician_middle_name,
+                ],
+                [
+                    'suffix' => $request->physician_suffix,
+                    'gender' => $request->physician_gender,
+                    'DateCreated' => now(),
+                    'CreatedBy' => $request->user()->username,
+                ]
+            );
 
+            // Create the patient record linking to existing/new records
             $patient = Patient::create([
                 'ptinfo_id' => $patientInfo->id,
                 'ptaddress_id' => $patientAddress->id,
@@ -336,11 +349,18 @@ class PatientController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
-            $addresses = PatientAddress::select('id', 'address')
-                ->orderBy('address')
-                ->get();
+            $perPage = $request->get('per_page', 10);
+            $search = $request->get('search', '');
 
-            return response()->json(['data' => $addresses]);
+            $query = PatientAddress::select('id', 'address');
+
+            if ($search) {
+                $query->where('address', 'like', '%' . $search . '%');
+            }
+
+            $addresses = $query->orderBy('address')->paginate($perPage);
+
+            return response()->json($addresses);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Unable to fetch addresses'], 500);
         }
@@ -353,11 +373,19 @@ class PatientController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
-            $rooms = PatientRoom::select('id', 'room_name as name', 'description')
-                ->orderBy('room_name')
-                ->get();
+            $perPage = $request->get('per_page', 10);
+            $search = $request->get('search', '');
 
-            return response()->json(['data' => $rooms]);
+            $query = PatientRoom::select('id', 'room_name as name', 'description');
+
+            if ($search) {
+                $query->where('room_name', 'like', '%' . $search . '%')
+                      ->orWhere('description', 'like', '%' . $search . '%');
+            }
+
+            $rooms = $query->orderBy('room_name')->paginate($perPage);
+
+            return response()->json($rooms);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Unable to fetch rooms'], 500);
         }
@@ -370,12 +398,22 @@ class PatientController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
-            $physicians = PatientPhysician::select('id', 'first_name', 'last_name', 'middle_name', 'suffix', 'gender')
-                ->orderBy('last_name')
-                ->orderBy('first_name')
-                ->get();
+            $perPage = $request->get('per_page', 10);
+            $search = $request->get('search', '');
 
-            return response()->json(['data' => $physicians]);
+            $query = PatientPhysician::select('id', 'first_name', 'last_name', 'middle_name', 'suffix', 'gender');
+
+            if ($search) {
+                $query->where('first_name', 'like', '%' . $search . '%')
+                      ->orWhere('last_name', 'like', '%' . $search . '%')
+                      ->orWhere('middle_name', 'like', '%' . $search . '%');
+            }
+
+            $physicians = $query->orderBy('last_name')
+                               ->orderBy('first_name')
+                               ->paginate($perPage);
+
+            return response()->json($physicians);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Unable to fetch physicians'], 500);
         }

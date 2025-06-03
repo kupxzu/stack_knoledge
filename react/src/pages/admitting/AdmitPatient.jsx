@@ -12,12 +12,10 @@ import {
 } from '@heroicons/react/24/outline';
 
 const AdmitPatient = () => {
-
-    const getTodayDate = () => {
+  const getTodayDate = () => {
     const today = new Date();
     return today.toISOString().split('T')[0];
   };
-
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -49,7 +47,6 @@ const AdmitPatient = () => {
   const [showRoomModal, setShowRoomModal] = useState(false);
   const [showPhysicianModal, setShowPhysicianModal] = useState(false);
   
-  const [newAddress, setNewAddress] = useState('');
   const [newRoom, setNewRoom] = useState({ name: '', description: '' });
   const [newPhysician, setNewPhysician] = useState({
     first_name: '',
@@ -59,47 +56,39 @@ const AdmitPatient = () => {
     gender: 'male'
   });
 
-  // Add this state for address input mode
-  const [addressInputMode, setAddressInputMode] = useState('select'); // 'select' or 'manual'
-
-  // Add these new states for address search
+  const [addressInputMode, setAddressInputMode] = useState('select');
   const [addressSearchTerm, setAddressSearchTerm] = useState('');
   const [filteredAddresses, setFilteredAddresses] = useState([]);
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
 
+  // Load initial data ONCE
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         const [addressesRes, roomsRes, physiciansRes] = await Promise.all([
-          api.get('/patient-addresses'),
-          api.get('/patient-rooms'),
-          api.get('/patient-physicians')
+          api.get('/patient-addresses?per_page=1000'),
+          api.get('/patient-rooms?per_page=1000'),
+          api.get('/patient-physicians?per_page=1000')
         ]);
 
-        setAddresses(addressesRes.data.data.map(addr => addr.address));
+        setAddresses(addressesRes.data.data.map(addr => addr.address) || []);
         setRooms(roomsRes.data.data || []);
         setPhysicians(physiciansRes.data.data || []);
       } catch (error) {
         console.error('Error loading initial data:', error);
-        const savedAddresses = JSON.parse(localStorage.getItem('addresses') || '[]');
-        const savedRooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-        const savedPhysicians = JSON.parse(localStorage.getItem('physicians') || '[]');
-        
-        setAddresses(savedAddresses);
-        setRooms(savedRooms);
-        setPhysicians(savedPhysicians);
       }
     };
 
     loadInitialData();
   }, []);
 
+  // Address search filter
   useEffect(() => {
     if (addressSearchTerm.length > 0) {
       const filtered = addresses.filter(addr => 
         addr.toLowerCase().includes(addressSearchTerm.toLowerCase())
       );
-      setFilteredAddresses(filtered.slice(0, 10)); // Limit to 10 results
+      setFilteredAddresses(filtered.slice(0, 10));
       setShowAddressDropdown(filtered.length > 0);
     } else {
       setFilteredAddresses([]);
@@ -114,117 +103,26 @@ const AdmitPatient = () => {
     });
   };
 
-  const handleAddAddress = async () => {
-    if (newAddress.trim()) {
-      try {
-        await api.post('/patient-addresses', { address: newAddress.trim() });
-        setFormData({ ...formData, address: newAddress.trim() });
-        setAddressSearchTerm(newAddress.trim());
-        setNewAddress('');
-        // Reload addresses
-      } catch (error) {
-        const updatedAddresses = [...addresses, newAddress.trim()];
-        setAddresses(updatedAddresses);
-        localStorage.setItem('addresses', JSON.stringify(updatedAddresses));
-        setFormData({ ...formData, address: newAddress.trim() });
-        setAddressSearchTerm(newAddress.trim());
-        setNewAddress('');
-      }
+  // Simple address selection
+  const handleAddressSelect = (address) => {
+    setFormData({ ...formData, address });
+    setAddressSearchTerm(address);
+    setShowAddressDropdown(false);
+  };
+
+  const handleAddressSearchChange = (e) => {
+    const value = e.target.value;
+    setAddressSearchTerm(value);
+    setFormData({ ...formData, address: value });
+    
+    if (value.length > 0) {
+      setShowAddressDropdown(true);
+    } else {
+      setShowAddressDropdown(false);
     }
   };
 
-  const handleAddRoom = async () => {
-    if (newRoom.name.trim()) {
-      try {
-        await api.post('/patient-rooms', {
-          room_name: newRoom.name.trim(),
-          description: newRoom.description.trim()
-        });
-        setFormData({ 
-          ...formData, 
-          room_name: newRoom.name.trim(),
-          room_description: newRoom.description.trim()
-        });
-        setNewRoom({ name: '', description: '' });
-        setShowRoomModal(false);
-      } catch (error) {
-        const roomData = {
-          id: Date.now(),
-          name: newRoom.name.trim(),
-          description: newRoom.description.trim()
-        };
-        const updatedRooms = [...rooms, roomData];
-        setRooms(updatedRooms);
-        localStorage.setItem('rooms', JSON.stringify(updatedRooms));
-        setFormData({ 
-          ...formData, 
-          room_name: newRoom.name.trim(),
-          room_description: newRoom.description.trim()
-        });
-        setNewRoom({ name: '', description: '' });
-        setShowRoomModal(false);
-      }
-    }
-  };
-
-  const handleAddPhysician = async () => {
-    if (newPhysician.first_name.trim() && newPhysician.last_name.trim()) {
-      try {
-        await api.post('/patient-physicians', {
-          first_name: newPhysician.first_name.trim(),
-          last_name: newPhysician.last_name.trim(),
-          middle_name: newPhysician.middle_name.trim(),
-          suffix: newPhysician.suffix.trim(),
-          gender: newPhysician.gender
-        });
-        setFormData({
-          ...formData,
-          physician_first_name: newPhysician.first_name.trim(),
-          physician_last_name: newPhysician.last_name.trim(),
-          physician_middle_name: newPhysician.middle_name.trim(),
-          physician_suffix: newPhysician.suffix.trim(),
-          physician_gender: newPhysician.gender
-        });
-        setNewPhysician({
-          first_name: '',
-          last_name: '',
-          middle_name: '',
-          suffix: '',
-          gender: 'male'
-        });
-        setShowPhysicianModal(false);
-      } catch (error) {
-        const physicianData = {
-          id: Date.now(),
-          ...newPhysician,
-          first_name: newPhysician.first_name.trim(),
-          last_name: newPhysician.last_name.trim(),
-          middle_name: newPhysician.middle_name.trim(),
-          suffix: newPhysician.suffix.trim()
-        };
-        const updatedPhysicians = [...physicians, physicianData];
-        setPhysicians(updatedPhysicians);
-        localStorage.setItem('physicians', JSON.stringify(updatedPhysicians));
-        setFormData({
-          ...formData,
-          physician_first_name: newPhysician.first_name.trim(),
-          physician_last_name: newPhysician.last_name.trim(),
-          physician_middle_name: newPhysician.middle_name.trim(),
-          physician_suffix: newPhysician.suffix.trim(),
-          physician_gender: newPhysician.gender
-        });
-        setNewPhysician({
-          first_name: '',
-          last_name: '',
-          middle_name: '',
-          suffix: '',
-          gender: 'male'
-        });
-        setShowPhysicianModal(false);
-      }
-    }
-  };
-
+  // Simple room selection
   const handleRoomSelect = (room) => {
     setFormData({
       ...formData,
@@ -233,23 +131,102 @@ const AdmitPatient = () => {
     });
   };
 
+  // Simple room addition
+  const handleAddRoom = async () => {
+    if (!newRoom.name.trim()) return;
+
+    try {
+      const response = await api.post('/patient-rooms', {
+        room_name: newRoom.name.trim(),
+        description: newRoom.description.trim()
+      });
+      
+      const newRoomData = {
+        id: response.data.data.id,
+        name: newRoom.name.trim(),
+        description: newRoom.description.trim()
+      };
+      
+      // Add to dropdown list
+      setRooms(prev => [...prev, newRoomData]);
+      
+      // Set in form
+      setFormData({
+        ...formData,
+        room_name: newRoom.name.trim(),
+        room_description: newRoom.description.trim()
+      });
+      
+      // Close modal
+      setNewRoom({ name: '', description: '' });
+      setShowRoomModal(false);
+    } catch (error) {
+      console.error('Error adding room:', error);
+    }
+  };
+
+  // Simple physician selection
   const handlePhysicianSelect = (physician) => {
     setFormData({
       ...formData,
       physician_first_name: physician.first_name,
       physician_last_name: physician.last_name,
-      physician_middle_name: physician.middle_name,
-      physician_suffix: physician.suffix,
+      physician_middle_name: physician.middle_name || '',
+      physician_suffix: physician.suffix || '',
       physician_gender: physician.gender
     });
   };
 
-  const handleAddressSelect = (address) => {
-    setFormData({ ...formData, address });
-    setAddressSearchTerm(address);
-    setShowAddressDropdown(false);
+  // Simple physician addition
+  const handleAddPhysician = async () => {
+    if (!newPhysician.first_name.trim() || !newPhysician.last_name.trim()) return;
+
+    try {
+      const response = await api.post('/patient-physicians', {
+        first_name: newPhysician.first_name.trim(),
+        last_name: newPhysician.last_name.trim(),
+        middle_name: newPhysician.middle_name.trim(),
+        suffix: newPhysician.suffix.trim(),
+        gender: newPhysician.gender
+      });
+      
+      const newPhysicianData = {
+        id: response.data.data.id,
+        first_name: newPhysician.first_name.trim(),
+        last_name: newPhysician.last_name.trim(),
+        middle_name: newPhysician.middle_name.trim(),
+        suffix: newPhysician.suffix.trim(),
+        gender: newPhysician.gender
+      };
+      
+      // Add to dropdown list
+      setPhysicians(prev => [...prev, newPhysicianData]);
+      
+      // Set in form
+      setFormData({
+        ...formData,
+        physician_first_name: newPhysicianData.first_name,
+        physician_last_name: newPhysicianData.last_name,
+        physician_middle_name: newPhysicianData.middle_name,
+        physician_suffix: newPhysicianData.suffix,
+        physician_gender: newPhysicianData.gender
+      });
+      
+      // Close modal
+      setNewPhysician({
+        first_name: '',
+        last_name: '',
+        middle_name: '',
+        suffix: '',
+        gender: 'male'
+      });
+      setShowPhysicianModal(false);
+    } catch (error) {
+      console.error('Error adding physician:', error);
+    }
   };
 
+  // SUPER SIMPLE SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -260,6 +237,8 @@ const AdmitPatient = () => {
 
       if (response.data) {
         setMessage('Patient admitted successfully!');
+        
+        // Reset form
         setFormData({
           first_name: '',
           last_name: '',
@@ -279,6 +258,11 @@ const AdmitPatient = () => {
           physician_suffix: '',
           physician_gender: 'male'
         });
+
+        // Reset search
+        setAddressSearchTerm('');
+        setFilteredAddresses([]);
+        setShowAddressDropdown(false);
       }
     } catch (error) {
       setMessage(error.response?.data?.message || 'Error admitting patient');
@@ -289,7 +273,6 @@ const AdmitPatient = () => {
 
   return (
     <AdmittingNavSide>
-      {/* Responsive Container - Much Wider */}
       <div className="w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-6 lg:mb-8">
@@ -324,9 +307,8 @@ const AdmitPatient = () => {
               Patient Information
             </h2>
             
-            {/* Name Fields - Responsive Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 mb-6">
-              <div className="sm:col-span-1">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   First Name <span className="text-red-500">*</span>
                 </label>
@@ -340,7 +322,7 @@ const AdmitPatient = () => {
                   placeholder="Enter first name"
                 />
               </div>
-              <div className="sm:col-span-1">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Last Name <span className="text-red-500">*</span>
                 </label>
@@ -354,7 +336,7 @@ const AdmitPatient = () => {
                   placeholder="Enter last name"
                 />
               </div>
-              <div className="sm:col-span-1">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name</label>
                 <input
                   type="text"
@@ -365,7 +347,7 @@ const AdmitPatient = () => {
                   placeholder="Enter middle name"
                 />
               </div>
-              <div className="sm:col-span-1">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Suffix</label>
                 <input
                   type="text"
@@ -378,9 +360,8 @@ const AdmitPatient = () => {
               </div>
             </div>
 
-            {/* Personal Details - Responsive Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6">
-              <div className="sm:col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Civil Status <span className="text-red-500">*</span>
                 </label>
@@ -398,7 +379,7 @@ const AdmitPatient = () => {
                   <option value="separated">Separated</option>
                 </select>
               </div>
-              <div className="sm:col-span-1">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Gender <span className="text-red-500">*</span>
                 </label>
@@ -414,7 +395,7 @@ const AdmitPatient = () => {
                   <option value="others">Others</option>
                 </select>
               </div>
-              <div className="sm:col-span-1">
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Date of Birth <span className="text-red-500">*</span>
                 </label>
@@ -437,7 +418,7 @@ const AdmitPatient = () => {
               Contact & Admission Details
             </h2>
             
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Contact Number <span className="text-red-500">*</span>
@@ -469,16 +450,18 @@ const AdmitPatient = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Room <span className="text-red-500">*</span>
                 </label>
-                <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex gap-2">
                   <select
                     value={formData.room_name}
                     onChange={(e) => {
                       const selectedRoom = rooms.find(room => room.name === e.target.value);
                       if (selectedRoom) {
                         handleRoomSelect(selectedRoom);
+                      } else {
+                        setFormData({ ...formData, room_name: '', room_description: '' });
                       }
                     }}
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="flex-1 w-50 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     required
                   >
                     <option value="">Select room</option>
@@ -491,7 +474,7 @@ const AdmitPatient = () => {
                   <button
                     type="button"
                     onClick={() => setShowRoomModal(true)}
-                    className="bg-blue-600 text-white px-3 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center sm:w-auto w-full"
+                    className="bg-blue-600 text-white px-3 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <PlusIcon className="w-4 h-4" />
                   </button>
@@ -506,7 +489,7 @@ const AdmitPatient = () => {
                   Address <span className="text-red-500">*</span>
                 </label>
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Add Address</span>
+                  <span className="text-sm text-gray-600">Add New</span>
                   <button
                     type="button"
                     onClick={() => setAddressInputMode(addressInputMode === 'select' ? 'manual' : 'select')}
@@ -520,53 +503,40 @@ const AdmitPatient = () => {
                       }`}
                     />
                   </button>
-                  <span className="text-sm text-gray-600"><i>@something new</i></span>
                 </div>
               </div>
               
               {addressInputMode === 'select' ? (
                 <div className="relative">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <div className="flex-1 relative">
-                      <input
-                        type="text"
-                        value={addressSearchTerm}
-                        onChange={(e) => {
-                          setAddressSearchTerm(e.target.value);
-                          setFormData({ ...formData, address: e.target.value });
-                        }}
-                        onFocus={() => {
-                          if (addressSearchTerm.length > 0) {
-                            setShowAddressDropdown(true);
-                          }
-                        }}
-                        placeholder="Search existing addresses..."
-                        required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      />
-                      
-                      {/* Search Results Dropdown */}
-                      {showAddressDropdown && filteredAddresses.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                          {filteredAddresses.map((address, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() => handleAddressSelect(address)}
-                              className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 focus:bg-blue-50 focus:outline-none"
-                            >
-                              <div className="text-sm text-gray-900">{address}</div>
-                            </button>
-                          ))}
-                          {addresses.length > 10 && (
-                            <div className="px-4 py-2 text-xs text-gray-500 bg-gray-50">
-                              Showing first 10 results. Type more to narrow down...
-                            </div>
-                          )}
-                        </div>
-                      )}
+                  <input
+                    type="text"
+                    value={addressSearchTerm}
+                    onChange={handleAddressSearchChange}
+                    onFocus={() => {
+                      if (addressSearchTerm.length > 0 && filteredAddresses.length > 0) {
+                        setShowAddressDropdown(true);
+                      }
+                    }}
+                    onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
+                    placeholder="Search existing addresses..."
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  />
+                  
+                  {showAddressDropdown && filteredAddresses.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {filteredAddresses.map((address, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => handleAddressSelect(address)}
+                          className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                        >
+                          {address}
+                        </button>
+                      ))}
                     </div>
-                  </div>
+                  )}
                 </div>
               ) : (
                 <textarea
@@ -593,15 +563,26 @@ const AdmitPatient = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Physician <span className="text-red-500">*</span>
               </label>
-              <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex gap-3">
                 <select
-                  value={`${formData.physician_first_name} ${formData.physician_last_name}`}
+                  value={formData.physician_first_name && formData.physician_last_name ? 
+                    `${formData.physician_first_name} ${formData.physician_last_name}` : ''
+                  }
                   onChange={(e) => {
                     const selectedPhysician = physicians.find(physician => 
                       `${physician.first_name} ${physician.last_name}` === e.target.value
                     );
                     if (selectedPhysician) {
                       handlePhysicianSelect(selectedPhysician);
+                    } else {
+                      setFormData({
+                        ...formData,
+                        physician_first_name: '',
+                        physician_last_name: '',
+                        physician_middle_name: '',
+                        physician_suffix: '',
+                        physician_gender: 'male'
+                      });
                     }
                   }}
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -610,17 +591,16 @@ const AdmitPatient = () => {
                   <option value="">Select physician</option>
                   {physicians.map((physician) => (
                     <option key={physician.id} value={`${physician.first_name} ${physician.last_name}`}>
-                      Dr. {physician.first_name} {physician.middle_name} {physician.last_name} {physician.suffix}
+                      Dr. {physician.first_name} {physician.middle_name && `${physician.middle_name} `}{physician.last_name} {physician.suffix}
                     </option>
                   ))}
                 </select>
                 <button
                   type="button"
                   onClick={() => setShowPhysicianModal(true)}
-                  className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center sm:w-auto w-full"
+                  className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  <PlusIcon className="w-4 h-4 mr-2 sm:mr-0" />
-                  <span className="sm:hidden">Add New Physician</span>
+                  <PlusIcon className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -649,34 +629,27 @@ const AdmitPatient = () => {
         </form>
       </div>
 
-
       {/* Room Modal */}
       {showRoomModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <BuildingOfficeIcon className="w-6 h-6 text-blue-600 mr-3" />
-                  <h3 className="text-lg font-semibold text-gray-900">Add New Room</h3>
-                </div>
-                <button
-                  onClick={() => setShowRoomModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <XMarkIcon className="w-6 h-6" />
+                <h3 className="text-lg font-semibold text-gray-900">Add New Room</h3>
+                <button onClick={() => setShowRoomModal(false)}>
+                  <XMarkIcon className="w-6 h-6 text-gray-400 hover:text-gray-600" />
                 </button>
               </div>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Room Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Room Name *</label>
                 <input
                   type="text"
                   value={newRoom.name}
                   onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
-                  placeholder="e.g., Room 101, ICU-A"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., Room 101"
                 />
               </div>
               <div>
@@ -685,27 +658,25 @@ const AdmitPatient = () => {
                   type="text"
                   value={newRoom.description}
                   onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
-                  placeholder="e.g., Private room, Ward bed"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., Private room"
                 />
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl">
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowRoomModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddRoom}
-                  disabled={!newRoom.name.trim()}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Add Room
-                </button>
-              </div>
+            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+              <button
+                onClick={() => setShowRoomModal(false)}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddRoom}
+                disabled={!newRoom.name.trim()}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add Room
+              </button>
             </div>
           </div>
         </div>
@@ -714,18 +685,12 @@ const AdmitPatient = () => {
       {/* Physician Modal */}
       {showPhysicianModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <UserIcon className="w-6 h-6 text-blue-600 mr-3" />
-                  <h3 className="text-lg font-semibold text-gray-900">Add New Physician</h3>
-                </div>
-                <button
-                  onClick={() => setShowPhysicianModal(false)}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <XMarkIcon className="w-6 h-6" />
+                <h3 className="text-lg font-semibold text-gray-900">Add New Physician</h3>
+                <button onClick={() => setShowPhysicianModal(false)}>
+                  <XMarkIcon className="w-6 h-6 text-gray-400 hover:text-gray-600" />
                 </button>
               </div>
             </div>
@@ -737,8 +702,7 @@ const AdmitPatient = () => {
                     type="text"
                     value={newPhysician.first_name}
                     onChange={(e) => setNewPhysician({ ...newPhysician, first_name: e.target.value })}
-                    placeholder="First name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -747,8 +711,7 @@ const AdmitPatient = () => {
                     type="text"
                     value={newPhysician.last_name}
                     onChange={(e) => setNewPhysician({ ...newPhysician, last_name: e.target.value })}
-                    placeholder="Last name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -759,8 +722,7 @@ const AdmitPatient = () => {
                     type="text"
                     value={newPhysician.middle_name}
                     onChange={(e) => setNewPhysician({ ...newPhysician, middle_name: e.target.value })}
-                    placeholder="Middle name"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -769,8 +731,7 @@ const AdmitPatient = () => {
                     type="text"
                     value={newPhysician.suffix}
                     onChange={(e) => setNewPhysician({ ...newPhysician, suffix: e.target.value })}
-                    placeholder="Jr., Sr., etc."
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -779,7 +740,7 @@ const AdmitPatient = () => {
                 <select
                   value={newPhysician.gender}
                   onChange={(e) => setNewPhysician({ ...newPhysician, gender: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="male">Male</option>
                   <option value="female">Female</option>
@@ -787,22 +748,20 @@ const AdmitPatient = () => {
                 </select>
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl">
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowPhysicianModal(false)}
-                  className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddPhysician}
-                  disabled={!newPhysician.first_name.trim() || !newPhysician.last_name.trim()}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Add Physician
-                </button>
-              </div>
+            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+              <button
+                onClick={() => setShowPhysicianModal(false)}
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddPhysician}
+                disabled={!newPhysician.first_name.trim() || !newPhysician.last_name.trim()}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Add Physician
+              </button>
             </div>
           </div>
         </div>

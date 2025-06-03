@@ -3,6 +3,7 @@
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientQRTPAController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -58,4 +59,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/qr-codes/{qrCode}', [PatientQRTPAController::class, 'getQRCode']);
     
     Route::post('/patients/{id}/regenerate-qr', [PatientQRTPAController::class, 'regenerateQRAndPortal']);
+
+    // Dashboard routes
+    Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
+    Route::get('/dashboard/trends', [DashboardController::class, 'getTrends']);
+    Route::get('/dashboard/charts', [DashboardController::class, 'getChartData']);
 });
