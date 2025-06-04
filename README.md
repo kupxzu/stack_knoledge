@@ -1,61 +1,151 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Billing System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A modern healthcare billing and patient management system built with Laravel and React.
 
-## About Laravel
+## 🚀 Tech Stack
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Backend
+- **PHP 8.1+** - Server-side programming language
+- **Laravel 10** - PHP web application framework
+- **MySQL 8.0** - Primary database
+- **Laravel Sanctum** - API authentication
+- **Laravel Excel** - Excel import/export functionality
+- **Spatie/Laravel-Permission** - Role and permission management
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Frontend
+- **React 18** - Modern JavaScript library for building user interfaces
+- **Vite** - Fast build tool and development server
+- **Tailwind CSS** - Utility-first CSS framework
+- **Heroicons** - Beautiful hand-crafted SVG icons
+- **Recharts** - Composable charting library for React
+- **Axios** - Promise-based HTTP client
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Development Tools
+- **Composer** - PHP dependency manager
+- **NPM/Yarn** - JavaScript package manager
+- **Laravel Artisan** - Command-line interface
+- **Laravel Tinker** - REPL for Laravel
+- **Hot Module Replacement (HMR)** - Live reload during development
 
-## Learning Laravel
+### Additional Libraries & Packages
+- **React Router DOM** - Client-side routing
+- **React Query/TanStack Query** - Data fetching and caching
+- **Headless UI** - Unstyled, accessible UI components
+- **Date-fns** - Modern JavaScript date utility library
+- **Laravel Debugbar** - Debug toolbar for Laravel (development)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 📋 Features
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **Patient Management** - Comprehensive patient registration and management
+- **Admitting System** - Streamlined patient admission workflow
+- **Billing & Invoicing** - Automated billing calculations and invoice generation
+- **Dashboard Analytics** - Real-time insights with interactive charts
+- **Role-based Access Control** - Multi-level user permissions
+- **Geographic Analytics** - Patient distribution by Philippine cities
+- **Physician Management** - Track admitting physicians and performance
+- **Room Management** - Hospital room allocation and utilization
+- **Responsive Design** - Mobile-first, modern UI/UX
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ System Requirements
 
-## Laravel Sponsors
+### Backend Requirements
+- PHP >= 8.1
+- MySQL >= 8.0
+- Composer >= 2.0
+- Apache/Nginx web server
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Frontend Requirements
+- Node.js >= 16.0
+- NPM >= 8.0 or Yarn >= 1.22
 
-### Premium Partners
+## 🏗️ Architecture
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```
+cas_billing/
+├── app/                    # Laravel application files
+│   ├── Http/Controllers/   # API controllers
+│   ├── Models/            # Eloquent models
+│   └── Services/          # Business logic services
+├── database/              # Database migrations and seeders
+├── react/                 # React frontend application
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # Page components
+│   │   ├── services/      # API services
+│   │   └── utils/         # Utility functions
+│   └── public/           # Static assets
+├── routes/               # Laravel routes
+└── public/              # Web server document root
+```
 
-## Contributing
+## 📊 Key Modules
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 1. Dashboard Module
+- Real-time analytics and KPIs
+- Interactive charts using Recharts
+- Geographic patient distribution
+- Physician performance metrics
 
-## Code of Conduct
+### 2. Admitting Module
+- Patient admission workflow
+- Room assignment and management
+- Physician assignment
+- Insurance and billing setup
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 3. Patient Management
+- Comprehensive patient profiles
+- Medical history tracking
+- Contact and address management
+- Insurance information
 
-## Security Vulnerabilities
+### 4. Billing System
+- Automated billing calculations
+- Invoice generation and management
+- Payment tracking
+- Insurance claim processing
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🎨 UI/UX Features
 
-## License
+- **Modern Design System** - Clean, professional healthcare-focused interface
+- **Responsive Layout** - Optimized for desktop, tablet, and mobile devices
+- **Dark/Light Mode** - User preference-based theming
+- **Interactive Charts** - Real-time data visualization with hover effects
+- **Smooth Animations** - Micro-interactions for better user experience
+- **Accessibility** - WCAG 2.1 compliant components
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 🔒 Security Features
+
+- **JWT Authentication** - Secure API authentication with Laravel Sanctum
+- **Role-based Permissions** - Granular access control using Spatie/Laravel-Permission
+- **Data Validation** - Server-side and client-side validation
+- **CSRF Protection** - Cross-site request forgery protection
+- **SQL Injection Prevention** - Eloquent ORM with prepared statements
+- **XSS Protection** - Input sanitization and output encoding
+
+## 🌍 Localization
+
+- **Philippine Healthcare Focus** - Optimized for Philippine medical institutions
+- **City Database** - Comprehensive Philippine cities and municipalities
+- **Currency Support** - PHP (Philippine Peso) billing calculations
+- **Date Formats** - Localized date and time formatting
+
+## 📈 Performance Optimizations
+
+- **Lazy Loading** - Code splitting for optimal bundle sizes
+- **Database Indexing** - Optimized database queries
+- **Caching** - Redis/Memcached support for improved performance
+- **Image Optimization** - Compressed and optimized assets
+- **CDN Ready** - Static asset delivery optimization
+
+## 🔧 Development Workflow
+
+1. **Backend Development** - Laravel with Artisan commands
+2. **Frontend Development** - React with Vite HMR
+3. **Database Management** - Laravel migrations and seeders
+4. **API Development** - RESTful APIs with Laravel
+5. **Testing** - PHPUnit for backend, Jest for frontend
+6. **Deployment** - Docker containerization support
+
+---
+
+Built with ❤️ for modern healthcare management
