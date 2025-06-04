@@ -321,7 +321,6 @@ const AdmittionSetting = () => {
           <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-4 mb-3">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <p className="text-sm text-gray-500 mb-1">ID: #{item.id}</p>
                 <p className="text-sm text-gray-900">{item.address}</p>
               </div>
               <div className="flex space-x-2 ml-3">
@@ -349,7 +348,6 @@ const AdmittionSetting = () => {
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-medium text-gray-900">{item.name}</h3>
-                  <span className="text-sm text-gray-500">#{item.id}</span>
                 </div>
                 <p className="text-sm text-gray-600">{item.description || 'No description'}</p>
               </div>
@@ -380,7 +378,6 @@ const AdmittionSetting = () => {
                   <h3 className="font-medium text-gray-900">
                     Dr. {item.first_name} {item.middle_name && item.middle_name + ' '}{item.last_name} {item.suffix}
                   </h3>
-                  <span className="text-sm text-gray-500">#{item.id}</span>
                 </div>
                 <p className="text-sm text-gray-600 capitalize">{item.gender}</p>
               </div>
@@ -414,7 +411,6 @@ const AdmittionSetting = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -422,7 +418,6 @@ const AdmittionSetting = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {getCurrentData().map((address) => (
                 <tr key={address.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{address.id}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     <div className="max-w-xs truncate">{address.address}</div>
                   </td>
@@ -453,7 +448,6 @@ const AdmittionSetting = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -462,7 +456,6 @@ const AdmittionSetting = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {getCurrentData().map((room) => (
                 <tr key={room.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{room.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{room.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">
                     <div className="max-w-xs truncate">{room.description || 'N/A'}</div>
@@ -494,7 +487,6 @@ const AdmittionSetting = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -503,7 +495,6 @@ const AdmittionSetting = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {getCurrentData().map((physician) => (
                 <tr key={physician.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">#{physician.id}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     Dr. {physician.first_name} {physician.middle_name && physician.middle_name + ' '}{physician.last_name} {physician.suffix}
                   </td>

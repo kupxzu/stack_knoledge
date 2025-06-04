@@ -770,4 +770,4 @@ const AdmitPatient = () => {
   );
 };
 
-export default AdmitPatient;
+export default AdmitPatient;  

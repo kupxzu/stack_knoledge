@@ -336,87 +336,124 @@ class PatientQRTPAController extends Controller
     /**
      * Regenerate QR Code and Patient Portal Access
      */
-        public function regenerateQRAndPortal(Request $request, $patientId)
-        {
-            try {
-                if (!in_array($request->user()->role, ['admin', 'admitting'])) {
-                    return response()->json(['error' => 'Unauthorized'], 403);
-                }
-
-                DB::beginTransaction();
-
-                $patient = Patient::findOrFail($patientId);
-
-                // Find existing QR and portal
-                $existingQR = $patient->activeQR;
-                $existingPortal = $existingQR ? $existingQR->portal : null;
-
-                // Delete old QR image if exists
-                if ($existingQR) {
-                    $oldQrPath = "qr-codes/{$existingQR->qrcode}.png";
-                    if (Storage::disk('public')->exists($oldQrPath)) {
-                        Storage::disk('public')->delete($oldQrPath);
-                    }
-                }
-
-                // Generate new access hash
-                $accessHash = Str::random(32);
-                
-                // Update or create portal access
-                if ($existingPortal) {
-                    $existingPortal->update([
-                        'access_hash' => $accessHash,
-                        'expires_at' => now()->addDays(30)
-                    ]);
-                    $portal = $existingPortal;
-                } else {
-                    $portal = PatientPortal::create([
-                        'patient_id' => $patientId,
-                        'access_hash' => $accessHash,
-                        'expires_at' => now()->addDays(30)
-                    ]);
-                }
-
-                // Generate new QR code
-                $qrData = url("/patient-portal/{$accessHash}");
-                $qrCode = Str::uuid();
-
-                // Update or create QR record
-                if ($existingQR) {
-                    $existingQR->update([
-                        'qrcode' => $qrCode,
-                        'ptportal_id' => $portal->id
-                    ]);
-                    $patientQR = $existingQR;
-                } else {
-                    $patientQR = PatientQR::create([
-                        'patient_id' => $patientId,
-                        'qrcode' => $qrCode,
-                        'ptportal_id' => $portal->id,
-                        'action' => 'active'
-                    ]);
-                }
-
-                // Generate new QR code image
-                $qrCodeImage = QrCode::format('png')->size(200)->generate($qrData);
-                $qrPath = "qr-codes/{$qrCode}.png";
-                Storage::disk('public')->put($qrPath, $qrCodeImage);
-
-                DB::commit();
-
-                return response()->json([
-                    'qr_data' => [
-                        'qr' => $patientQR,
-                        'portal' => $portal,
-                        'qr_image_url' => Storage::url($qrPath),
-                        'portal_url' => $qrData
-                    ],
-                    'message' => 'QR Code regenerated successfully'
-                ]);
-
-            } catch (\Exception $e) {
-                DB::rollback();
-                return response()->json(['error' => 'Unable to regenerate QR code'], 500);
+    public function regenerateQRAndPortal(Request $request, $patientId)
+    {
+        try {
+            if (!in_array($request->user()->role, ['admin', 'admitting'])) {
+                return response()->json(['error' => 'Unauthorized'], 403);
             }
+
+            DB::beginTransaction();
+
+            $patient = Patient::findOrFail($patientId);
+
+            // Find existing QR and portal
+            $existingQR = $patient->activeQR;
+            $existingPortal = $existingQR ? $existingQR->portal : null;
+
+            // Delete old QR image if exists
+            if ($existingQR) {
+                $oldQrPath = "qr-codes/{$existingQR->qrcode}.png";
+                if (Storage::disk('public')->exists($oldQrPath)) {
+                    Storage::disk('public')->delete($oldQrPath);
+                }
+            }
+
+            // Generate new access hash
+            $accessHash = Str::random(32);
+            
+            // Update or create portal access
+            if ($existingPortal) {
+                $existingPortal->update([
+                    'access_hash' => $accessHash,
+                    'expires_at' => now()->addDays(30)
+                ]);
+                $portal = $existingPortal;
+            } else {
+                $portal = PatientPortal::create([
+                    'patient_id' => $patientId,
+                    'access_hash' => $accessHash,
+                    'expires_at' => now()->addDays(30)
+                ]);
+            }
+
+            // Generate new QR code
+            $qrData = url("/patient-portal/{$accessHash}");
+            $qrCode = Str::uuid();
+
+            // Update or create QR record
+            if ($existingQR) {
+                $existingQR->update([
+                    'qrcode' => $qrCode,
+                    'ptportal_id' => $portal->id
+                ]);
+                $patientQR = $existingQR;
+            } else {
+                $patientQR = PatientQR::create([
+                    'patient_id' => $patientId,
+                    'qrcode' => $qrCode,
+                    'ptportal_id' => $portal->id,
+                    'action' => 'active'
+                ]);
+            }
+
+            // Generate new QR code image
+            $qrCodeImage = QrCode::format('png')->size(200)->generate($qrData);
+            $qrPath = "qr-codes/{$qrCode}.png";
+            Storage::disk('public')->put($qrPath, $qrCodeImage);
+
+            DB::commit();
+
+            return response()->json([
+                'qr_data' => [
+                    'qr' => $patientQR,
+                    'portal' => $portal,
+                    'qr_image_url' => Storage::url($qrPath),
+                    'portal_url' => $qrData
+                ],
+                'message' => 'QR Code regenerated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return response()->json(['error' => 'Unable to regenerate QR code'], 500);
         }
+    }
+
+    /**
+     * Download PDF file (handles CORS properly)
+     */
+    public function downloadPDF(Request $request)
+    {
+        try {
+            $request->validate([
+                'file_path' => 'required|string',
+                'filename' => 'nullable|string'
+            ]);
+
+            $filePath = $request->get('file_path');
+            $filename = $request->get('filename', 'statement.pdf');
+            
+            // Remove any leading slashes and 'storage/' prefix
+            $filePath = ltrim($filePath, '/');
+            $filePath = str_replace('storage/', '', $filePath);
+            
+            // Get the full path in storage
+            $fullPath = storage_path('app/public/' . $filePath);
+            
+            // Check if file exists
+            if (!file_exists($fullPath)) {
+                return response()->json(['error' => 'File not found'], 404);
+            }
+            
+            // Return the file as download
+            return response()->download($fullPath, $filename, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+            ]);
+            
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Unable to download file'], 500);
+        }
+    }
 }

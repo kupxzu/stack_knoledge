@@ -17,6 +17,7 @@ Route::post('/reset-password', [UserController::class, 'resetPassword']);
 
 // Public patient portal access
 Route::get('/patient-portal/{accessHash}', [PatientQRTPAController::class, 'getPatientPortal']);
+Route::get('/download-pdf', [PatientQRTPAController::class, 'downloadPDF']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [UserController::class, 'profile']);

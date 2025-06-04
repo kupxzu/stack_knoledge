@@ -4,6 +4,9 @@ import Login from '@pages/Login';
 import Dashboard from '@pages/Dashboard';
 
 import AdminDash from '@pages/admin/AdminDash';
+import UserCreate from '@/pages/admin/UserCreate';
+import UserEdit from '@/pages/admin/UserEdit';
+import UserDetail from '@/pages/admin/UserDetail';
 
 import AdmitPatient from '@pages/admitting/AdmitPatient';
 import AdmitPatientList from '@pages/admitting/AdmitPatientList';
@@ -31,8 +34,9 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           
-          {/* Public Patient Portal Route */}
+          {/* does hash*/}
           <Route path="/patient-portal/:accessHash" element={<PatientPortal />} />
+          
           
           <Route 
             path="/dashboard" 
@@ -49,6 +53,30 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin']}>
                 <AdminDash />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/users/create" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UserCreate />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/users/:id" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UserDetail />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/users/:id/edit" 
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UserEdit />
               </ProtectedRoute>
             } 
           />
