@@ -6,7 +6,7 @@ A modern healthcare billing and patient management system built with Laravel and
 
 ### Backend
 - **PHP 8.1+** - Server-side programming language
-- **Laravel 10** - PHP web application framework
+- **Laravel 12** - PHP web application framework
 - **MySQL 8.0** - Primary database
 - **Laravel Sanctum** - API authentication
 - **Laravel Excel** - Excel import/export functionality
