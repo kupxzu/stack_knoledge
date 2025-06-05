@@ -11,9 +11,17 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Storage;
+use App\Services\CacheService;
 
 class PatientQRTPAController extends Controller
 {
+    /**
+     * Cache TTL constants (in seconds)
+     */
+    const CACHE_TTL_SHORT = 300;  // 5 minutes
+    const CACHE_TTL_MEDIUM = 1800; // 30 minutes
+    const CACHE_TTL_LONG = 86400;  // 24 hours
+
     /**
      * Generate QR Code and Portal Access when patient is admitted
      */
@@ -53,12 +61,17 @@ class PatientQRTPAController extends Controller
 
             DB::commit();
 
-            return [
+            // Clear any cached data for this patient
+            $this->clearPatientCache($patientId);
+
+            $result = [
                 'qr' => $patientQR,
                 'portal' => $portal,
                 'qr_image_url' => Storage::url($qrPath),
                 'portal_url' => $qrData
             ];
+
+            return $result;
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -76,33 +89,49 @@ class PatientQRTPAController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
-            $patients = Patient::with([
-                'patientInfo',
-                'patientAddress', 
-                'patientRoom',
-                'patientPhysician',
-                'activeQR',
-                'transactions'
-            ])
-            ->whereHas('activeQR', function($query) {
-                $query->where('action', 'active');
-            })
-            ->get()
-            ->map(function($patient) {
-                return [
-                    'id' => $patient->id,
-                    'patient_info' => $patient->patientInfo,
-                    'patient_address' => $patient->patientAddress,
-                    'patient_room' => $patient->patientRoom,
-                    'patient_physician' => $patient->patientPhysician,
-                    'qr_code' => $patient->activeQR->qrcode ?? null,
-                    'total_amount' => $patient->total_amount,
-                    'transaction_count' => $patient->transactions->count(),
-                    'status' => 'active'
-                ];
-            });
+            // Check for force refresh parameter
+            $forceRefresh = $request->boolean('force_refresh', false);
+            $cacheKey = 'billing:active-patients';
+            
+            if ($forceRefresh) {
+                CacheService::forget($cacheKey);
+            }
 
-            return response()->json(['data' => $patients]);
+            // Get data from cache or execute query
+            $result = CacheService::remember($cacheKey, function() {
+                $patients = Patient::with([
+                    'patientInfo',
+                    'patientAddress', 
+                    'patientRoom',
+                    'patientPhysician',
+                    'activeQR',
+                    'transactions'
+                ])
+                ->whereHas('activeQR', function($query) {
+                    $query->where('action', 'active');
+                })
+                ->get()
+                ->map(function($patient) {
+                    return [
+                        'id' => $patient->id,
+                        'patient_info' => $patient->patientInfo,
+                        'patient_address' => $patient->patientAddress,
+                        'patient_room' => $patient->patientRoom,
+                        'patient_physician' => $patient->patientPhysician,
+                        'qr_code' => $patient->activeQR->qrcode ?? null,
+                        'total_amount' => $patient->total_amount,
+                        'transaction_count' => $patient->transactions->count(),
+                        'status' => 'active'
+                    ];
+                });
+
+                return $patients;
+            }, self::CACHE_TTL_SHORT);
+
+            return response()->json([
+                'data' => $result['data'],
+                'fromCache' => $result['fromCache']
+            ]);
 
         } catch (\Exception $e) {
             return response()->json(['error' => 'Unable to fetch active patients'], 500);
@@ -119,39 +148,56 @@ class PatientQRTPAController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
-            $patient = Patient::with([
-                'patientInfo',
-                'patientAddress',
-                'patientRoom', 
-                'patientPhysician',
-                'activeQR.portal',
-                'transactions' => function($query) {
-                    $query->orderBy('created_at', 'desc');
-                }
-            ])->findOrFail($id);
-
-            // Check if patient is active
-            if (!$patient->activeQR || $patient->activeQR->action !== 'active') {
-                return response()->json(['error' => 'Patient is not active'], 400);
+            // Check for force refresh parameter
+            $forceRefresh = $request->boolean('force_refresh', false);
+            $cacheKey = "billing:patient:{$id}";
+            
+            if ($forceRefresh) {
+                CacheService::forget($cacheKey);
             }
 
+            // Get data from cache or execute query
+            $result = CacheService::remember($cacheKey, function() use ($id) {
+                $patient = Patient::with([
+                    'patientInfo',
+                    'patientAddress',
+                    'patientRoom', 
+                    'patientPhysician',
+                    'activeQR.portal',
+                    'transactions' => function($query) {
+                        $query->orderBy('created_at', 'desc');
+                    }
+                ])->findOrFail($id);
+
+                // Check if patient is active
+                if (!$patient->activeQR || $patient->activeQR->action !== 'active') {
+                    throw new \Exception('Patient is not active', 400);
+                }
+
+                return [
+                    'patient' => [
+                        'id' => $patient->id,
+                        'patient_info' => $patient->patientInfo,
+                        'patient_address' => $patient->patientAddress,
+                        'patient_room' => $patient->patientRoom,
+                        'patient_physician' => $patient->patientPhysician,
+                        'qr_code' => $patient->activeQR->qrcode,
+                        'portal_access' => $patient->activeQR->portal,
+                        'transactions' => $patient->transactions,
+                        'total_amount' => $patient->total_amount,
+                        'status' => $patient->activeQR->action
+                    ]
+                ];
+            }, self::CACHE_TTL_SHORT);
+
             return response()->json([
-                'patient' => [
-                    'id' => $patient->id,
-                    'patient_info' => $patient->patientInfo,
-                    'patient_address' => $patient->patientAddress,
-                    'patient_room' => $patient->patientRoom,
-                    'patient_physician' => $patient->patientPhysician,
-                    'qr_code' => $patient->activeQR->qrcode,
-                    'portal_access' => $patient->activeQR->portal,
-                    'transactions' => $patient->transactions,
-                    'total_amount' => $patient->total_amount,
-                    'status' => $patient->activeQR->action
-                ]
+                ...$result['data'],
+                'fromCache' => $result['fromCache']
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Patient not found'], 404);
+            $statusCode = $e->getCode() >= 400 ? $e->getCode() : 500;
+            return response()->json(['error' => $e->getMessage()], $statusCode);
         }
     }
 
@@ -200,6 +246,9 @@ class PatientQRTPAController extends Controller
 
             DB::commit();
 
+            // Clear patient cache after adding transaction
+            $this->clearPatientCache($request->patient_id);
+
             return response()->json([
                 'transaction' => $transaction,
                 'message' => 'Transaction added successfully'
@@ -237,6 +286,10 @@ class PatientQRTPAController extends Controller
 
             DB::commit();
 
+            // Clear patient cache after discharge
+            $this->clearPatientCache($id);
+            CacheService::forget('billing:active-patients');
+
             return response()->json(['message' => 'Patient discharged successfully']);
 
         } catch (\Exception $e) {
@@ -251,49 +304,59 @@ class PatientQRTPAController extends Controller
     public function getPatientPortal($accessHash)
     {
         try {
-            $portal = PatientPortal::with([
-                'patient.patientInfo',
-                'patient.patientAddress',
-                'patient.patientRoom',
-                'patient.patientPhysician',
-                'patient.transactions' => function($query) {
-                    $query->orderBy('created_at', 'desc');
+            $cacheKey = "patient-portal:{$accessHash}";
+            
+            $result = CacheService::remember($cacheKey, function() use ($accessHash) {
+                $portal = PatientPortal::with([
+                    'patient.patientInfo',
+                    'patient.patientAddress',
+                    'patient.patientRoom',
+                    'patient.patientPhysician',
+                    'patient.transactions' => function($query) {
+                        $query->orderBy('created_at', 'desc');
+                    }
+                ])->where('access_hash', $accessHash)->first();
+
+                if (!$portal) {
+                    throw new \Exception('Invalid access code', 404);
                 }
-            ])->where('access_hash', $accessHash)->first();
 
-            if (!$portal) {
-                return response()->json(['error' => 'Invalid access code'], 404);
-            }
+                if ($portal->isExpired()) {
+                    throw new \Exception('Access code has expired', 403);
+                }
 
-            if ($portal->isExpired()) {
-                return response()->json(['error' => 'Access code has expired'], 403);
-            }
+                $patient = $portal->patient;
+                $totalAmount = $patient->total_amount;
 
-            $patient = $portal->patient;
-            $totalAmount = $patient->total_amount;
+                return [
+                    'patient' => [
+                        'id' => $patient->id,
+                        'patient_info' => $patient->patientInfo,
+                        'patient_address' => $patient->patientAddress,
+                        'patient_room' => $patient->patientRoom,
+                        'patient_physician' => $patient->patientPhysician,
+                        'total_amount' => $totalAmount,
+                        'transactions' => $patient->transactions->map(function($transaction) {
+                            return [
+                                'id' => $transaction->id,
+                                'amount' => $transaction->amount,
+                                'soa_pdf' => $transaction->soa_pdf ? Storage::url($transaction->soa_pdf) : null,
+                                'created_at' => $transaction->created_at
+                            ];
+                        }),
+                        'access_expires_at' => $portal->expires_at
+                    ]
+                ];
+            }, self::CACHE_TTL_MEDIUM);
 
             return response()->json([
-                'patient' => [
-                    'id' => $patient->id,
-                    'patient_info' => $patient->patientInfo,
-                    'patient_address' => $patient->patientAddress,
-                    'patient_room' => $patient->patientRoom,
-                    'patient_physician' => $patient->patientPhysician,
-                    'total_amount' => $totalAmount,
-                    'transactions' => $patient->transactions->map(function($transaction) {
-                        return [
-                            'id' => $transaction->id,
-                            'amount' => $transaction->amount,
-                            'soa_pdf' => $transaction->soa_pdf ? Storage::url($transaction->soa_pdf) : null,
-                            'created_at' => $transaction->created_at
-                        ];
-                    }),
-                    'access_expires_at' => $portal->expires_at
-                ]
+                ...$result['data'],
+                'fromCache' => $result['fromCache']
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Unable to access portal'], 500);
+            $statusCode = $e->getCode() >= 400 ? $e->getCode() : 500;
+            return response()->json(['error' => $e->getMessage()], $statusCode);
         }
     }
 
@@ -307,29 +370,44 @@ class PatientQRTPAController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
-            $patientQR = PatientQR::where('qrcode', $qrCode)->first();
-
-            if (!$patientQR) {
-                return response()->json(['error' => 'QR code not found'], 404);
-            }
-
-            $qrPath = "qr-codes/{$qrCode}.png";
+            $forceRefresh = $request->boolean('force_refresh', false);
+            $cacheKey = "qr-code:{$qrCode}";
             
-            if (!Storage::disk('public')->exists($qrPath)) {
-                // Regenerate QR code if missing
-                $portal = $patientQR->portal;
-                $qrData = url("/patient-portal/{$portal->access_hash}");
-                $qrCodeImage = QrCode::format('png')->size(200)->generate($qrData);
-                Storage::disk('public')->put($qrPath, $qrCodeImage);
+            if ($forceRefresh) {
+                CacheService::forget($cacheKey);
             }
+
+            $result = CacheService::remember($cacheKey, function() use ($qrCode) {
+                $patientQR = PatientQR::where('qrcode', $qrCode)->first();
+
+                if (!$patientQR) {
+                    throw new \Exception('QR code not found', 404);
+                }
+
+                $qrPath = "qr-codes/{$qrCode}.png";
+                
+                if (!Storage::disk('public')->exists($qrPath)) {
+                    // Regenerate QR code if missing
+                    $portal = $patientQR->portal;
+                    $qrData = url("/patient-portal/{$portal->access_hash}");
+                    $qrCodeImage = QrCode::format('png')->size(200)->generate($qrData);
+                    Storage::disk('public')->put($qrPath, $qrCodeImage);
+                }
+
+                return [
+                    'qr_image_url' => Storage::url($qrPath),
+                    'portal_url' => url("/patient-portal/{$patientQR->portal->access_hash}")
+                ];
+            }, self::CACHE_TTL_LONG);
 
             return response()->json([
-                'qr_image_url' => Storage::url($qrPath),
-                'portal_url' => url("/patient-portal/{$patientQR->portal->access_hash}")
+                ...$result['data'],
+                'fromCache' => $result['fromCache']
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Unable to get QR code'], 500);
+            $statusCode = $e->getCode() >= 400 ? $e->getCode() : 500;
+            return response()->json(['error' => $e->getMessage()], $statusCode);
         }
     }
 
@@ -388,6 +466,11 @@ class PatientQRTPAController extends Controller
                     'ptportal_id' => $portal->id
                 ]);
                 $patientQR = $existingQR;
+                
+                // Clear old QR cache
+                if ($existingQR->qrcode !== $qrCode) {
+                    CacheService::forget("qr-code:{$existingQR->qrcode}");
+                }
             } else {
                 $patientQR = PatientQR::create([
                     'patient_id' => $patientId,
@@ -403,6 +486,14 @@ class PatientQRTPAController extends Controller
             Storage::disk('public')->put($qrPath, $qrCodeImage);
 
             DB::commit();
+
+            // Clear related caches
+            $this->clearPatientCache($patientId);
+            
+            // If there was an old portal, clear its cache
+            if ($existingPortal && $existingPortal->access_hash !== $accessHash) {
+                CacheService::forget("patient-portal:{$existingPortal->access_hash}");
+            }
 
             return response()->json([
                 'qr_data' => [
@@ -454,6 +545,31 @@ class PatientQRTPAController extends Controller
             
         } catch (\Exception $e) {
             return response()->json(['error' => 'Unable to download file'], 500);
+        }
+    }
+    
+    /**
+     * Clear all cache related to a specific patient
+     */
+    private function clearPatientCache($patientId)
+    {
+        CacheService::forget("billing:patient:{$patientId}");
+        CacheService::forget('billing:active-patients');
+        
+        // Find and clear portal cache if it exists
+        try {
+            $patientQR = PatientQR::where('patient_id', $patientId)->first();
+            if ($patientQR) {
+                CacheService::forget("qr-code:{$patientQR->qrcode}");
+                
+                // Clear portal access cache if exists
+                if ($patientQR->portal) {
+                    CacheService::forget("patient-portal:{$patientQR->portal->access_hash}");
+                }
+            }
+        } catch (\Exception $e) {
+            // Silent fail - this is just cache cleanup
+            \Log::warning("Error clearing cache: " . $e->getMessage());
         }
     }
 }

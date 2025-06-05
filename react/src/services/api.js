@@ -35,4 +35,24 @@ api.interceptors.response.use(
   }
 );
 
+// Add this method to your api object
+api.getCached = async function(url, params = {}, options = {}) {
+  try {
+    const response = await this.get(url, { 
+      params: {
+        ...params,
+        force_refresh: options.forceRefresh || false
+      }
+    });
+    
+    return {
+      data: response.data,
+      fromCache: response.data.fromCache || false
+    };
+  } catch (error) {
+    console.error('Cached API request error:', error);
+    throw error;
+  }
+};
+
 export default api;

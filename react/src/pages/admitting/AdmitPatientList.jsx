@@ -15,7 +15,7 @@ import {
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import AdmittingNavSide from '@/components/AdmittingNavSide';
-import api from '@/services/api';
+import patientService from '@/services/patientService';
 
 const TableSkeleton = () => (
   <div className="hidden lg:block bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -180,24 +180,22 @@ const AdmitPatientList = () => {
   const loadPatients = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await api.get('/patients', {
-        params: {
-          page,
-          per_page: pagination.per_page,
-          search,
-          sort_by: 'DateCreated',
-          sort_order: sortOrder
-        }
+      const response = await patientService.getPatients({
+        page,
+        per_page: pagination.per_page,
+        search,
+        sort_by: 'DateCreated',
+        sort_order: sortOrder
       });
 
-      setPatients(response.data.data);
+      setPatients(response.data || []);
       setPagination({
-        current_page: response.data.current_page,
-        last_page: response.data.last_page,
-        per_page: response.data.per_page,
-        total: response.data.total,
-        from: response.data.from,
-        to: response.data.to
+        current_page: response.current_page || 1,
+        last_page: response.last_page || 1,
+        per_page: response.per_page || 10,
+        total: response.total || 0,
+        from: response.from || 0,
+        to: response.to || 0
       });
     } catch (error) {
       setMessage('Error loading patients');

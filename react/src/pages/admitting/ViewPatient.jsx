@@ -19,6 +19,7 @@ import {
 } from '@heroicons/react/24/outline';
 import AdmittingNavSide from '@/components/AdmittingNavSide';
 import api from '@/services/api';
+import patientService from '@/services/patientService';
 import { getPortalUrl, getApiAssetUrl } from '@/utils/urlReplace';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
@@ -30,19 +31,27 @@ const ViewPatient = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [qrData, setQrData] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
 
   
   useEffect(() => {
     loadPatient();
   }, [id]);
 
-  const loadPatient = async () => {
-    setLoading(true);
+  const loadPatient = async (options = {}) => {
     try {
-      const response = await api.get(`/patients/${id}`);
-      const patientData = response.data.patient;
+      if (!options.refresh) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+      
+      const result = await patientService.getPatient(id, options);
+      const patientData = result.data.patient;
       setPatient(patientData);
-
+      setFromCache(result.fromCache || false);
+      
       // Load QR data if available
       if (patientData.qr_data) {
         setQrData(patientData.qr_data);
@@ -54,6 +63,7 @@ const ViewPatient = () => {
       console.error('Error loading patient:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 

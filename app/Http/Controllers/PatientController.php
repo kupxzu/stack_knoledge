@@ -10,20 +10,48 @@ use App\Models\PatientPhysician;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redis;
+use App\Services\CacheService;
 
 class PatientController extends Controller
 {
     public function index(Request $request)
     {
         try {
+            // Authorization check
             if (!in_array($request->user()->role, ['admin', 'admitting'])) {
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
-
+            
+            // Get parameters but disable cache
             $perPage = $request->get('per_page', 10);
             $search = $request->get('search', '');
             $sortBy = $request->get('sort_by', 'DateCreated');
             $sortOrder = $request->get('sort_order', 'desc');
+            
+            // Direct database query without caching
+            $query = Patient::with(['patientInfo', 'patientAddress', 'patientRoom', 'patientPhysician']);
+            
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->whereHas('patientInfo', function($subq) use ($search) {
+                        $subq->where('first_name', 'like', '%' . $search . '%')
+                            ->orWhere('last_name', 'like', '%' . $search . '%')
+                            ->orWhere('middle_name', 'like', '%' . $search . '%')
+                            ->orWhere('contact_number', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('patientAddress', function($subq) use ($search) {
+                        $subq->where('address', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('patientRoom', function($subq) use ($search) {
+                        $subq->where('room_name', 'like', '%' . $search . '%');
+                    })
+                    ->orWhereHas('patientPhysician', function($subq) use ($search) {
+                        $subq->where('first_name', 'like', '%' . $search . '%')
+                            ->orWhere('last_name', 'like', '%' . $search . '%');
+                    });
+                });
+            }
 
             $allowedSortColumns = ['id', 'DateCreated', 'patient_name'];
             if (!in_array($sortBy, $allowedSortColumns)) {
@@ -33,27 +61,6 @@ class PatientController extends Controller
             $allowedSortOrders = ['asc', 'desc'];
             if (!in_array($sortOrder, $allowedSortOrders)) {
                 $sortOrder = 'desc';
-            }
-
-            $query = Patient::with(['patientInfo', 'patientAddress', 'patientRoom', 'patientPhysician']);
-
-            if ($search) {
-                $query->whereHas('patientInfo', function($q) use ($search) {
-                    $q->where('first_name', 'like', '%' . $search . '%')
-                      ->orWhere('last_name', 'like', '%' . $search . '%')
-                      ->orWhere('middle_name', 'like', '%' . $search . '%')
-                      ->orWhere('contact_number', 'like', '%' . $search . '%');
-                })
-                ->orWhereHas('patientAddress', function($q) use ($search) {
-                    $q->where('address', 'like', '%' . $search . '%');
-                })
-                ->orWhereHas('patientRoom', function($q) use ($search) {
-                    $q->where('room_name', 'like', '%' . $search . '%');
-                })
-                ->orWhereHas('patientPhysician', function($q) use ($search) {
-                    $q->where('first_name', 'like', '%' . $search . '%')
-                      ->orWhere('last_name', 'like', '%' . $search . '%');
-                });
             }
 
             if ($sortBy === 'patient_name') {
@@ -66,10 +73,119 @@ class PatientController extends Controller
             }
 
             $patients = $query->paginate($perPage);
-
-            return response()->json($patients);
+            
+            // Return response
+            return response()->json([
+                'data' => $patients->items(),
+                'current_page' => $patients->currentPage(),
+                'last_page' => $patients->lastPage(),
+                'per_page' => $patients->perPage(),
+                'total' => $patients->total(),
+                'from' => $patients->firstItem(),
+                'to' => $patients->lastItem(),
+                'fromCache' => false
+            ]);
         } catch (\Exception $e) {
+            // Log error
+            \Log::error('Error in patients index: ' . $e->getMessage());
             return response()->json(['error' => 'Unable to fetch patients'], 500);
+        }
+    }
+
+    public function show(Request $request, $id)
+    {
+        try {
+            if (!in_array($request->user()->role, ['admin', 'admitting', 'billing'])) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+            
+            $forceRefresh = $request->boolean('force_refresh', false);
+            $cacheKey = "patients:single:{$id}";
+            
+            if (!$forceRefresh) {
+                $result = CacheService::remember($cacheKey, function() use ($id) {
+                    $patient = Patient::with([
+                        'patientInfo',
+                        'patientAddress',
+                        'patientRoom',
+                        'patientPhysician',
+                        'activeQR.portal'
+                    ])->find($id);
+                    
+                    if (!$patient) {
+                        throw new \Exception("Patient not found", 404);
+                    }
+                    
+                    return [
+                        'patient' => [
+                            'id' => $patient->id,
+                            'patient_info' => $patient->patientInfo,
+                            'patient_address' => $patient->patientAddress,
+                            'patient_room' => $patient->patientRoom,
+                            'patient_physician' => $patient->patientPhysician,
+                            'qr_code' => $patient->activeQR ? $patient->activeQR->qrcode : null,
+                            'qr_data' => $patient->activeQR ? [
+                                'qr' => $patient->activeQR,
+                                'portal' => $patient->activeQR->portal,
+                                'qr_image_url' => $patient->activeQR->qrcode ? \Storage::url("qr-codes/{$patient->activeQR->qrcode}.png") : null,
+                                'portal_url' => $patient->activeQR->portal ? url("/patient-portal/{$patient->activeQR->portal->access_hash}") : null
+                            ] : null,
+                            'created_at' => $patient->DateCreated,
+                            'created_by' => $patient->CreatedBy
+                        ]
+                    ];
+                });
+                
+                return response()->json([
+                    ...$result['data'],
+                    'fromCache' => $result['fromCache']
+                ]);
+            } else {
+                // Force refresh
+                CacheService::forget($cacheKey);
+                $result = CacheService::remember($cacheKey, function() use ($id) {
+                    // Same query as above
+                    $patient = Patient::with([
+                        'patientInfo',
+                        'patientAddress',
+                        'patientRoom',
+                        'patientPhysician',
+                        'activeQR.portal'
+                    ])->find($id);
+                    
+                    if (!$patient) {
+                        throw new \Exception("Patient not found", 404);
+                    }
+                    
+                    // Same response format
+                    return [
+                        'patient' => [
+                            'id' => $patient->id,
+                            'patient_info' => $patient->patientInfo,
+                            'patient_address' => $patient->patientAddress,
+                            'patient_room' => $patient->patientRoom,
+                            'patient_physician' => $patient->patientPhysician,
+                            'qr_code' => $patient->activeQR ? $patient->activeQR->qrcode : null,
+                            'qr_data' => $patient->activeQR ? [
+                                'qr' => $patient->activeQR,
+                                'portal' => $patient->activeQR->portal,
+                                'qr_image_url' => $patient->activeQR->qrcode ? \Storage::url("qr-codes/{$patient->activeQR->qrcode}.png") : null,
+                                'portal_url' => $patient->activeQR->portal ? url("/patient-portal/{$patient->activeQR->portal->access_hash}") : null
+                            ] : null,
+                            'created_at' => $patient->DateCreated,
+                            'created_by' => $patient->CreatedBy
+                        ]
+                    ];
+                });
+                
+                return response()->json([
+                    ...$result['data'],
+                    'fromCache' => false
+                ]);
+            }
+        } catch (\Exception $e) {
+            $statusCode = $e->getCode() && $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
+            return response()->json(['error' => $e->getMessage()], $statusCode);
         }
     }
 
@@ -175,6 +291,9 @@ class PatientController extends Controller
                 'activeQR.portal'
             ]);
 
+            // After successful creation, invalidate list cache
+            CacheService::forgetPattern('patients:list');
+            
             return response()->json([
                 'patient' => $patient,
                 'qr_data' => $qrData,
@@ -187,45 +306,6 @@ class PatientController extends Controller
         } catch (\Exception $e) {
             DB::rollback();
             return response()->json(['error' => 'Unable to create patient'], 500);
-        }
-    }
-
-    public function show(Request $request, $id)
-    {
-        try {
-            if (!in_array($request->user()->role, ['admin', 'admitting', 'billing'])) {
-                return response()->json(['error' => 'Unauthorized'], 403);
-            }
-
-            $patient = Patient::with([
-                'patientInfo',
-                'patientAddress',
-                'patientRoom',
-                'patientPhysician',
-                'activeQR.portal'
-            ])->findOrFail($id);
-
-            $patientData = [
-                'id' => $patient->id,
-                'patient_info' => $patient->patientInfo,
-                'patient_address' => $patient->patientAddress,
-                'patient_room' => $patient->patientRoom,
-                'patient_physician' => $patient->patientPhysician,
-                'qr_code' => $patient->activeQR ? $patient->activeQR->qrcode : null,
-                'qr_data' => $patient->activeQR ? [
-                    'qr' => $patient->activeQR,
-                    'portal' => $patient->activeQR->portal,
-                    'qr_image_url' => $patient->activeQR->qrcode ? \Storage::url("qr-codes/{$patient->activeQR->qrcode}.png") : null,
-                    'portal_url' => $patient->activeQR->portal ? url("/patient-portal/{$patient->activeQR->portal->access_hash}") : null
-                ] : null,
-                'created_at' => $patient->DateCreated,
-                'created_by' => $patient->CreatedBy
-            ];
-
-            return response()->json(['patient' => $patientData]);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Patient not found'], 404);
         }
     }
 
@@ -316,6 +396,10 @@ class PatientController extends Controller
                 'patientPhysician',
             ]);
 
+            // After successful update, invalidate specific cache
+            CacheService::forget("patients:single:{$id}");
+            CacheService::forgetPattern('patients:list');
+            
             return response()->json(['patient' => $patient, 'message' => 'Patient updated successfully']);
         } catch (ValidationException $e) {
             DB::rollback();
@@ -336,6 +420,10 @@ class PatientController extends Controller
             $patient = Patient::findOrFail($id);
             $patient->delete();
 
+            // After successful deletion, invalidate specific cache
+            CacheService::forget("patients:single:{$id}");
+            CacheService::forgetPattern('patients:list');
+            
             return response()->json(['message' => 'Patient deleted successfully']);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Unable to delete patient'], 500);

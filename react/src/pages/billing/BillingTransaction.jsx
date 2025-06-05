@@ -1,266 +1,274 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
 import BillingNavSide from '@/components/BillingNavSide';
 import api from '@/services/api';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter 
-} from '@/components/billing/dialog';
-import { Button } from '@/components/billing/button';
-import { Input } from '@/components/billing/input';
-import { Label } from '@/components/billing/label';
-import { Badge } from '@/components/billing/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/billing/card';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  User, 
-  Building, 
-  Stethoscope, // Replace UserDoctor with Stethoscope
-  Phone, 
-  Plus, 
-  Eye, 
-  FileText,
-  AlertTriangle,
-  Download
-} from 'lucide-react';
+import {
+  UserIcon,
+  HomeIcon,
+  UserGroupIcon,
+  CurrencyDollarIcon,
+  DocumentTextIcon,
+  MagnifyingGlassIcon,
+  PlusIcon,
+  ArrowRightOnRectangleIcon,
+  ExclamationTriangleIcon,
+  CheckCircleIcon,
+  XMarkIcon,
+  DocumentArrowUpIcon,
+  CreditCardIcon,
+  CalendarIcon,
+  EyeIcon,
+  ChevronDownIcon,
+  ChevronUpIcon
+} from '@heroicons/react/24/outline';
 
-// Utility functions
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-PH', {
-    style: 'currency',
-    currency: 'PHP',
-  }).format(Number(amount));
+// Create a patient cache service to store patient details
+const patientCache = {
+  data: new Map(),
+  set: function(id, data) {
+    this.data.set(id, {
+      data,
+      timestamp: Date.now()
+    });
+  },
+  get: function(id) {
+    const cached = this.data.get(id);
+    if (cached && Date.now() - cached.timestamp < 60000) { // Cache for 1 minute
+      return cached.data;
+    }
+    return null;
+  }
 };
 
-const formatDate = (dateString) => {
-  return new Intl.DateTimeFormat('en-PH', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(dateString));
-};
-
-const getFullName = (patientInfo) => {
-  return [
-    patientInfo?.first_name,
-    patientInfo?.middle_name,
-    patientInfo?.last_name
-  ].filter(Boolean).join(' ');
-};
-
-// Loading skeleton component
-const PatientTableSkeleton = () => (
-  <div className="space-y-4">
-    {Array.from({ length: 5 }).map((_, i) => (
-      <div key={i} className="flex items-center space-x-4 p-4">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-32" />
-        <Skeleton className="h-10 w-24" />
-        <Skeleton className="h-10 w-20" />
-        <Skeleton className="h-10 w-24" />
+// Memoize the PatientListItem component
+const PatientListItem = memo(({ patient, isSelected, onClick }) => (
+  <div 
+    onClick={() => onClick(patient)}
+    className={`p-4 border rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md ${
+      isSelected 
+        ? 'border-blue-500 bg-blue-50 shadow-lg' 
+        : 'border-gray-200 bg-white hover:border-gray-300'
+    }`}
+  >
+    <div className="flex items-center justify-between">
+      <div className="flex items-center space-x-3">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+          isSelected ? 'bg-blue-600' : 'bg-gray-400'
+        }`}>
+          <UserIcon className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h4 className="font-semibold text-gray-900">
+            {patient.patient_info?.first_name} {patient.patient_info?.last_name}
+          </h4>
+          <p className="text-sm text-gray-500">
+            Room {patient.patient_room?.room_name} • #{patient.id}
+          </p>
+        </div>
       </div>
-    ))}
+      <div className="text-right">
+        <p className="font-bold text-blue-600">
+          ₱{parseFloat(patient.total_amount || 0).toFixed(2)}
+        </p>
+        <p className="text-xs text-gray-500">
+          {patient.transaction_count} transactions
+        </p>
+      </div>
+    </div>
   </div>
-);
+));
 
-// Main component
 const BillingTransaction = () => {
   const navigate = useNavigate();
-  
-  // State
   const [activePatients, setActivePatients] = useState([]);
+  const [filteredPatients, setFilteredPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState(null);
-  const [selectedPatientId, setSelectedPatientId] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showTransactionModal, setShowTransactionModal] = useState(false);
-  const [showDischargeModal, setShowDischargeModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [patientLoading, setPatientLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPdf, setSelectedPdf] = useState(null);
   const [transactionData, setTransactionData] = useState({
     amount: '',
     soa_pdf: null
   });
-  const [isAddingTransaction, setIsAddingTransaction] = useState(false);
-  const [isDischargingPatient, setIsDischargingPatient] = useState(false);
 
-  // Load active patients
-  const loadActivePatients = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await api.get('/billing/active-patients');
-      setActivePatients(response.data.data || []);
-    } catch (error) {
-      console.error('Error loading active patients:', error);
-      setError('Failed to load patient data. Please try again.');
-      toast.error('Failed to load patient data');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  // Load patient details
-  const loadPatientDetails = useCallback(async (patientId) => {
-    try {
-      const response = await api.get(`/billing/patients/${patientId}`);
-      setSelectedPatient(response.data.patient);
-    } catch (error) {
-      console.error('Error loading patient details:', error);
-      toast.error('Failed to load patient details');
-    }
-  }, []);
-
-  // Load data on component mount
+  // Load active patients once on component mount
   useEffect(() => {
     loadActivePatients();
-  }, [loadActivePatients]);
-
-  // Load patient details when selected
-  useEffect(() => {
-    if (selectedPatientId) {
-      loadPatientDetails(selectedPatientId);
-    }
-  }, [selectedPatientId, loadPatientDetails]);
-
-  // Handlers
-  const handleViewDetails = useCallback((patientId) => {
-    setSelectedPatientId(patientId);
   }, []);
 
-  const handleAddTransaction = useCallback(async (e) => {
-    e.preventDefault();
-    if (!selectedPatientId || !transactionData.amount || isAddingTransaction) return;
+  // Filter patients whenever search term or active patient list changes
+  const filterPatients = useCallback(() => {
+    if (!searchTerm) {
+      setFilteredPatients(activePatients);
+      return;
+    }
 
+    const filtered = activePatients.filter(patient => {
+      const fullName = `${patient.patient_info?.first_name} ${patient.patient_info?.middle_name} ${patient.patient_info?.last_name}`.toLowerCase();
+      const room = patient.patient_room?.room_name?.toLowerCase() || '';
+      const physician = `${patient.patient_physician?.first_name} ${patient.patient_physician?.last_name}`.toLowerCase();
+      
+      return fullName.includes(searchTerm.toLowerCase()) ||
+             room.includes(searchTerm.toLowerCase()) ||
+             physician.includes(searchTerm.toLowerCase()) ||
+             patient.id.toString().includes(searchTerm);
+    });
+
+    setFilteredPatients(filtered);
+  }, [searchTerm, activePatients]);
+
+  // Apply filtering when dependencies change
+  useEffect(() => {
+    filterPatients();
+  }, [filterPatients]);
+
+  const loadActivePatients = async () => {
+    setLoading(true);
     try {
-      setIsAddingTransaction(true);
+      const response = await api.get('/billing/active-patients');
+      setActivePatients(response.data.data);
+    } catch (error) {
+      setMessage('Error loading active patients');
+      console.error('Error loading active patients:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Optimized patient details loading with cache
+  const loadPatientDetails = useCallback(async (patient) => {
+    // First, set a temporary selection immediately for responsive UI
+    setSelectedPatient(prevSelected => {
+      // If the same patient is selected, don't update
+      if (prevSelected?.id === patient.id) return prevSelected;
+      
+      // Return a basic patient object for immediate UI update
+      return {
+        ...patient,
+        isLoading: true, // Add loading flag
+        transactions: [] // Initialize empty transactions
+      };
+    });
+    
+    // Check cache first
+    const cachedPatient = patientCache.get(patient.id);
+    if (cachedPatient) {
+      setSelectedPatient({
+        ...cachedPatient,
+        isLoading: false
+      });
+      return;
+    }
+    
+    // If not in cache, fetch from API
+    setPatientLoading(true);
+    try {
+      const response = await api.get(`/billing/patients/${patient.id}`);
+      const fullPatientData = response.data.patient;
+      
+      // Update patient with full data and remove loading state
+      setSelectedPatient({
+        ...fullPatientData,
+        isLoading: false
+      });
+      
+      // Cache the result
+      patientCache.set(patient.id, fullPatientData);
+    } catch (error) {
+      setMessage('Error loading patient details');
+      console.error('Error loading patient details:', error);
+      // Reset selection on error
+      setSelectedPatient(null);
+    } finally {
+      setPatientLoading(false);
+    }
+  }, []);
+
+  const handleAddTransaction = async (e) => {
+    e.preventDefault();
+    if (!selectedPatient) return;
+    
+    setSubmitting(true);
+    
+    try {
       const formData = new FormData();
-      formData.append('patient_id', selectedPatientId.toString());
+      formData.append('patient_id', selectedPatient.id);
       formData.append('amount', transactionData.amount);
       if (transactionData.soa_pdf) {
         formData.append('soa_pdf', transactionData.soa_pdf);
       }
 
       await api.post('/billing/transactions', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
-      toast.success('Transaction added successfully');
-      setShowTransactionModal(false);
+      setMessage('Transaction added successfully');
       setTransactionData({ amount: '', soa_pdf: null });
+      setSelectedPdf(null);
       
-      // Reload data
-      await loadActivePatients();
-      await loadPatientDetails(selectedPatientId);
-
+      // Remove from cache to force refresh
+      patientCache.data.delete(selectedPatient.id);
+      
+      // Reload patient details
+      loadPatientDetails({id: selectedPatient.id});
+      loadActivePatients();
     } catch (error) {
+      setMessage('Error adding transaction');
       console.error('Error adding transaction:', error);
-      toast.error('Failed to add transaction');
     } finally {
-      setIsAddingTransaction(false);
-    }
-  }, [selectedPatientId, transactionData, isAddingTransaction, loadActivePatients, loadPatientDetails]);
-
-  const handleDischargePatient = useCallback(async () => {
-    if (!selectedPatientId || isDischargingPatient) return;
-
-    try {
-      setIsDischargingPatient(true);
-
-      await api.post(`/billing/patients/${selectedPatientId}/discharge`);
-
-      toast.success('Patient discharged successfully');
-      setShowDischargeModal(false);
-      setSelectedPatientId(null);
-      setSelectedPatient(null);
-      
-      // Reload patients list
-      await loadActivePatients();
-
-    } catch (error) {
-      console.error('Error discharging patient:', error);
-      toast.error('Failed to discharge patient');
-    } finally {
-      setIsDischargingPatient(false);
-    }
-  }, [selectedPatientId, isDischargingPatient, loadActivePatients]);
-
-  const handleFileChange = useCallback((e) => {
-    const file = e.target.files?.[0] || null;
-    setTransactionData(prev => ({ ...prev, soa_pdf: file }));
-  }, []);
-
-  const handleAmountChange = useCallback((e) => {
-    setTransactionData(prev => ({ ...prev, amount: e.target.value }));
-  }, []);
-
-  // Download handler
-  const handleDownload = async (fileUrl, fileName, transactionId) => {
-    try {
-      const params = new URLSearchParams({
-        file_path: fileUrl,
-        filename: fileName || `SOA_${transactionId}.pdf`
-      });
-
-      const response = await api.get(`/download-pdf?${params.toString()}`, {
-        responseType: 'blob' 
-      });
-
-      const url = window.URL.createObjectURL(response.data);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName || `SOA_${transactionId}.pdf`;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      window.URL.revokeObjectURL(url);
-      
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to download file. Please try again.');
+      setSubmitting(false);
     }
   };
 
-  // Memoized values
-  const patientStats = useMemo(() => ({
-    totalPatients: activePatients.length,
-    totalAmount: activePatients.reduce((sum, patient) => sum + Number(patient.total_amount || 0), 0)
-  }), [activePatients]);
+  const handleDischargePatient = async () => {
+    if (!selectedPatient) return;
+    
+    setSubmitting(true);
+    try {
+      await api.post(`/billing/patients/${selectedPatient.id}/discharge`);
+      setMessage('Patient discharged successfully');
+      
+      // Remove from cache
+      patientCache.data.delete(selectedPatient.id);
+      
+      setSelectedPatient(null);
+      loadActivePatients();
+    } catch (error) {
+      setMessage('Error discharging patient');
+      console.error('Error discharging patient:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-  // Error boundary
-  if (error) {
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') {
+      setTransactionData({ ...transactionData, soa_pdf: file });
+      const fileUrl = URL.createObjectURL(file);
+      setSelectedPdf(fileUrl);
+    }
+  };
+
+  // Main loading state
+  if (loading) {
     return (
       <BillingNavSide>
-        <Card className="border-red-200">
-          <CardContent className="pt-6">
-            <div className="flex items-center space-x-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              <span>{error}</span>
-            </div>
-            <Button 
-              onClick={loadActivePatients} 
-              className="mt-4"
-              variant="outline"
-            >
-              Try Again
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded-lg w-64 mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded w-48"></div>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="bg-gray-200 h-96 rounded-2xl animate-pulse"></div>
+            <div className="lg:col-span-2 bg-gray-200 h-96 rounded-2xl animate-pulse"></div>
+          </div>
+        </div>
       </BillingNavSide>
     );
   }
@@ -269,331 +277,352 @@ const BillingTransaction = () => {
     <BillingNavSide>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Billing & Transactions</h1>
-            <p className="text-gray-600">Manage patient billing and transaction records</p>
+        <div className="animate-slide-in-from-top">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Billing & Transactions</h1>
+              <p className="text-gray-600">Manage patient billing and transaction records</p>
+            </div>
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-4 border border-blue-200">
+              <div className="flex items-center space-x-3">
+                <CurrencyDollarIcon className="w-8 h-8 text-blue-600" />
+                <div>
+                  <p className="text-2xl font-bold text-blue-900">{activePatients.length}</p>
+                  <p className="text-sm text-blue-700">Active Patients</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <Button onClick={loadActivePatients} variant="outline">
-            Refresh
-          </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card>
-            <CardContent className="pt-6">
+        {/* Message */}
+        {message && (
+          <div className={`p-4 rounded-xl border animate-slide-in-from-top ${
+            message.includes('successfully') 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <User className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active Patients</p>
-                  <p className="text-2xl font-bold text-gray-900">{patientStats.totalPatients}</p>
-                </div>
+                {message.includes('successfully') ? (
+                  <CheckCircleIcon className="w-5 h-5 mr-2" />
+                ) : (
+                  <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
+                )}
+                {message}
               </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center">
-                <FileText className="h-8 w-8 text-green-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Outstanding</p>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {formatCurrency(patientStats.totalAmount)}
-                  </p>
-                </div>
+              <button 
+                onClick={() => setMessage('')}
+                className="p-1 hover:bg-black hover:bg-opacity-10 rounded"
+              >
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Patient Search & List */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-in">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-gray-900">Active Patients</h3>
+                <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
+                  {filteredPatients.length}
+                </span>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Patients Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Active Patients</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <PatientTableSkeleton />
-            ) : activePatients.length === 0 ? (
-              <div className="text-center py-12">
-                <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No active patients found</p>
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Room</TableHead>
-                    <TableHead>Physician</TableHead>
-                    <TableHead>Total Amount</TableHead>
-                    <TableHead>Transactions</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {activePatients.map((patient) => (
-                    <TableRow key={patient.id} className="hover:bg-gray-50">
-                      <TableCell>
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {getFullName(patient.patient_info)}
-                          </div>
-                          <div className="text-sm text-gray-500">ID: #{patient.id}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <Building className="h-3 w-3" />
-                          {patient.patient_room?.room_name}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Stethoscope className="h-4 w-4 text-blue-600" />
-                          <span>Dr. {patient.patient_physician?.first_name} {patient.patient_physician?.last_name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(patient.total_amount || 0)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">
-                          {patient.transaction_count} transaction{patient.transaction_count !== 1 ? 's' : ''}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewDetails(patient.id)}
-                          className="flex items-center gap-1"
-                        >
-                          <Eye className="h-4 w-4" />
-                          View Details
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Patient Details Modal */}
-      <Dialog open={!!selectedPatientId} onOpenChange={() => {
-        setSelectedPatientId(null);
-        setSelectedPatient(null);
-      }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Patient Details & Transactions</DialogTitle>
-            <DialogDescription>
-              View and manage patient billing information
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedPatient && (
-            <div className="space-y-6">
-              {/* Patient Info Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Patient Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      <span className="font-medium">{getFullName(selectedPatient.patient_info)}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Building className="h-4 w-4 text-gray-500" />
-                      <span>{selectedPatient.patient_room?.room_name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Stethoscope className="h-4 w-4 text-gray-500" />
-                      <span>Dr. {selectedPatient.patient_physician?.first_name} {selectedPatient.patient_physician?.last_name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-gray-500" />
-                      <span>{selectedPatient.patient_info?.contact_number}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Billing Summary</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <div className="text-3xl font-bold text-blue-900">
-                        {formatCurrency(selectedPatient.total_amount || 0)}
-                      </div>
-                      <div className="text-sm text-blue-700">Total Outstanding Amount</div>
-                    </div>
-                  </CardContent>
-                </Card>
+              
+              {/* Search */}
+              <div className="relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search patients..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                />
               </div>
 
-              {/* Transaction History */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle>Transaction History</CardTitle>
-                    <Button onClick={() => setShowTransactionModal(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Transaction
-                    </Button>
+              {/* Patient List with Memoized Items */}
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {filteredPatients.length === 0 ? (
+                  <div className="text-center py-8">
+                    <UserGroupIcon className="w-12 h-12 mx-auto text-gray-300 mb-3" />
+                    <p className="text-gray-500">No patients found</p>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  {selectedPatient.transactions?.length === 0 ? (
-                    <div className="text-center py-8">
-                      <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-500">No transactions recorded yet</p>
+                ) : (
+                  filteredPatients.map((patient) => (
+                    <PatientListItem
+                      key={patient.id}
+                      patient={patient}
+                      isSelected={selectedPatient?.id === patient.id}
+                      onClick={loadPatientDetails}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Patient Details & Transactions */}
+          <div className="lg:col-span-2 space-y-6">
+            {selectedPatient ? (
+              <>
+                {/* Patient Information */}
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-in">
+                  {patientLoading || selectedPatient.isLoading ? (
+                    <div className="animate-pulse space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 bg-blue-200 rounded-full"></div>
+                        <div className="space-y-2">
+                          <div className="h-6 bg-blue-100 rounded w-48"></div>
+                          <div className="h-4 bg-gray-200 rounded w-32"></div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-4">
+                          <div className="h-12 bg-gray-100 rounded-xl"></div>
+                          <div className="h-12 bg-gray-100 rounded-xl"></div>
+                        </div>
+                        <div className="md:col-span-2">
+                          <div className="h-36 bg-blue-100 rounded-2xl"></div>
+                        </div>
+                      </div>
                     </div>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>SOA</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedPatient.transactions?.map((transaction) => (
-                          <TableRow key={transaction.id}>
-                            <TableCell>{formatDate(transaction.created_at)}</TableCell>
-                            <TableCell className="font-medium">
-                              {formatCurrency(transaction.amount)}
-                            </TableCell>
-                            <TableCell>
-                              {transaction.soa_pdf ? (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleDownload(
-                                    transaction.soa_pdf,
-                                    `SOA_${transaction.id}.pdf`,
-                                    transaction.id
-                                  )}
-                                  className="flex items-center gap-1"
-                                >
-                                  <Download className="h-4 w-4" />
-                                  Download SOA
-                                </Button>
-                              ) : (
-                                <span className="text-gray-500 text-sm">No SOA</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                    <>
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                            <UserIcon className="w-8 h-8 text-white" />
+                          </div>
+                          <div>
+                            <h2 className="text-2xl font-bold text-gray-900">
+                              {selectedPatient.patient_info?.first_name} {selectedPatient.patient_info?.last_name}
+                            </h2>
+                            <p className="text-gray-500">Patient ID: #{selectedPatient.id}</p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={handleDischargePatient}
+                          disabled={submitting}
+                          className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-200 transform hover:scale-105 font-medium shadow-lg flex items-center space-x-2 disabled:opacity-50 disabled:transform-none"
+                        >
+                          {submitting ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white mr-1"></div>
+                              <span>Processing...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ArrowRightOnRectangleIcon className="w-4 h-4" />
+                              <span>Discharge</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-4">
+                          <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
+                            <HomeIcon className="w-5 h-5 text-gray-400" />
+                            <div>
+                              <p className="text-sm text-gray-500">Room</p>
+                              <p className="font-medium text-gray-900">{selectedPatient.patient_room?.room_name}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-xl">
+                            <UserGroupIcon className="w-5 h-5 text-gray-400" />
+                            <div>
+                              <p className="text-sm text-gray-500">Physician</p>
+                              <p className="font-medium text-gray-900">
+                                Dr. {selectedPatient.patient_physician?.first_name} {selectedPatient.patient_physician?.last_name}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="md:col-span-2">
+                          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+                            <h4 className="text-lg font-bold mb-2">Billing Summary</h4>
+                            <div className="text-3xl font-bold">
+                              ₱{parseFloat(selectedPatient.total_amount || 0).toFixed(2)}
+                            </div>
+                            <p className="text-blue-100">Total Amount Due</p>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   )}
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setSelectedPatientId(null);
-              setSelectedPatient(null);
-            }}>
-              Close
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => setShowDischargeModal(true)}
-            >
-              Discharge Patient
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                {/* Add Transaction Form */}
+                {!patientLoading && !selectedPatient.isLoading && (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-in">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                      <PlusIcon className="w-5 h-5 mr-2 text-green-600" />
+                      Add New Transaction
+                    </h3>
+                    
+                    <form onSubmit={handleAddTransaction} className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-3">
+                            Transaction Amount <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <CurrencyDollarIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={transactionData.amount}
+                              onChange={(e) => setTransactionData({ ...transactionData, amount: e.target.value })}
+                              required
+                              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                              placeholder="0.00"
+                            />
+                          </div>
+                        </div>
 
-      {/* Add Transaction Modal */}
-      <Dialog open={showTransactionModal} onOpenChange={setShowTransactionModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Transaction</DialogTitle>
-            <DialogDescription>
-              Add a new billing transaction for this patient
-            </DialogDescription>
-          </DialogHeader>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-3">
+                            SOA PDF (Optional)
+                          </label>
+                          <div className="relative">
+                            <DocumentArrowUpIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                              type="file"
+                              accept=".pdf"
+                              onChange={handleFileChange}
+                              className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            />
+                          </div>
+                        </div>
+                      </div>
 
-          <form onSubmit={handleAddTransaction} className="space-y-4">
-            <div>
-              <Label htmlFor="amount">Amount *</Label>
-              <Input
-                id="amount"
-                type="number"
-                step="0.01"
-                min="0"
-                value={transactionData.amount}
-                onChange={handleAmountChange}
-                placeholder="Enter amount"
-                required
-              />
-            </div>
+                      {/* PDF Preview */}
+                      {selectedPdf && (
+                        <div className="border border-gray-300 rounded-xl p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="font-medium text-gray-900">PDF Preview</h4>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedPdf(null);
+                                setTransactionData({ ...transactionData, soa_pdf: null });
+                              }}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <XMarkIcon className="w-5 h-5" />
+                            </button>
+                          </div>
+                          <iframe
+                            src={selectedPdf}
+                            className="w-full h-64 rounded-lg border"
+                            title="PDF Preview"
+                          />
+                        </div>
+                      )}
 
-            <div>
-              <Label htmlFor="soa">SOA PDF (Optional)</Label>
-              <Input
-                id="soa"
-                type="file"
-                accept=".pdf"
-                onChange={handleFileChange}
-              />
-              <p className="text-xs text-gray-500 mt-1">Upload Statement of Account PDF file</p>
-            </div>
+                      <button
+                        type="submit"
+                        disabled={submitting || !transactionData.amount}
+                        className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-xl hover:from-green-700 hover:to-green-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 font-medium shadow-lg disabled:transform-none"
+                      >
+                        {submitting ? (
+                          <div className="flex items-center justify-center">
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                            Adding Transaction...
+                          </div>
+                        ) : (
+                          'Add Transaction'
+                        )}
+                      </button>
+                    </form>
+                  </div>
+                )}
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setShowTransactionModal(false)}>
-                Cancel
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isAddingTransaction || !transactionData.amount}
-              >
-                {isAddingTransaction ? 'Adding...' : 'Add Transaction'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Discharge Confirmation Modal */}
-      <Dialog open={showDischargeModal} onOpenChange={setShowDischargeModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Discharge Patient</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to discharge this patient? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDischargeModal(false)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDischargePatient}
-              disabled={isDischargingPatient}
-            >
-              {isDischargingPatient ? 'Discharging...' : 'Discharge Patient'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                {/* Transaction History */}
+                {!patientLoading && !selectedPatient.isLoading ? (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-in">
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                      <DocumentTextIcon className="w-5 h-5 mr-2 text-blue-600" />
+                      Transaction History
+                    </h3>
+                    
+                    {selectedPatient.transactions?.length === 0 ? (
+                      <div className="text-center py-8">
+                        <DocumentTextIcon className="w-12 h-12 mx-auto text-gray-300 mb-4" />
+                        <p className="text-gray-500 font-medium">No transactions yet</p>
+                        <p className="text-gray-400 text-sm">Add the first transaction above</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {selectedPatient.transactions?.map((transaction, index) => (
+                          <div 
+                            key={transaction.id}
+                            className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                          >
+                            <div className="flex items-center space-x-4">
+                              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center">
+                                <CurrencyDollarIcon className="w-5 h-5 text-white" />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-900">
+                                  ₱{parseFloat(transaction.amount).toFixed(2)}
+                                </p>
+                                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                                  <CalendarIcon className="w-4 h-4" />
+                                  <span>{new Date(transaction.created_at).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {transaction.soa_pdf && (
+                              <a
+                                href={`${import.meta.env.VITE_API_URL}/storage/${transaction.soa_pdf}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                              >
+                                <EyeIcon className="w-4 h-4 mr-1" />
+                                View SOA
+                              </a>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-fade-in">
+                    <div className="animate-pulse">
+                      <div className="flex items-center space-x-2 mb-6">
+                        <div className="w-5 h-5 bg-blue-200 rounded"></div>
+                        <div className="h-5 bg-blue-100 rounded w-36"></div>
+                      </div>
+                      <div className="space-y-3">
+                        {[...Array(3)].map((_, i) => (
+                          <div key={i} className="h-16 bg-gray-100 rounded-xl"></div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center animate-fade-in">
+                <UserIcon className="w-16 h-16 mx-auto text-gray-300 mb-6" />
+                <h3 className="text-xl font-medium text-gray-500 mb-2">Select a Patient</h3>
+                <p className="text-gray-400">Choose a patient from the list to view details and manage transactions</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </BillingNavSide>
   );
 };
