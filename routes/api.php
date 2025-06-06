@@ -52,6 +52,22 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/patient-physicians/{id}', [PatientController::class, 'updatePhysician']);
     Route::delete('/patient-physicians/{id}', [PatientController::class, 'destroyPhysician']);
 
+    Route::get('/physicians/admitting', function(Request $request) {
+        $request->merge(['type' => 'admitting']);
+        return app(PatientController::class)->getPhysicians($request);
+    });
+    
+    Route::get('/physicians/attending', function(Request $request) {
+        $request->merge(['type' => 'attending']);
+        return app(PatientController::class)->getPhysicians($request);
+    });
+
+    // Alternative physician routes (cleaner endpoints)
+    Route::get('/physicians', [PatientController::class, 'getPhysicians']);
+    Route::post('/physicians', [PatientController::class, 'storePhysician']);
+    Route::put('/physicians/{id}', [PatientController::class, 'updatePhysician']);
+    Route::delete('/physicians/{id}', [PatientController::class, 'destroyPhysician']);
+
     // Patient QR, Transaction, Portal routes
     Route::get('/billing/active-patients', [PatientQRTPAController::class, 'getActivePatients']);
     Route::get('/billing/patients/{id}', [PatientQRTPAController::class, 'getPatientForBilling']);

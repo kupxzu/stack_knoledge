@@ -17,7 +17,7 @@ import Skeleton, { SkeletonTheme } from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
 
 
-const AdmittionSetting = () => {
+const AdmissionSetting = () => {
   const [activeTab, setActiveTab] = useState('addresses');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -137,24 +137,26 @@ const AdmittionSetting = () => {
     try {
       const endpoint = getEndpoint();
       
+      
       if (editingItem) {
-        await api.put(`${endpoint}/${editingItem.id}`, formData);
+        const response = await api.put(`${endpoint}/${editingItem.id}`, formData);
         setMessage('Item updated successfully');
       } else {
-        await api.post(endpoint, formData);
+        const response = await api.post(endpoint, formData);
         setMessage('Item created successfully');
       }
       
       setShowModal(false);
       loadData();
     } catch (error) {
+
+      
       if (error.response?.data?.errors) {
         const errors = Object.values(error.response.data.errors).flat();
         setMessage(`Validation error: ${errors.join(', ')}`);
       } else {
-        setMessage(error.response?.data?.message || 'Error saving item');
+        setMessage(error.response?.data?.error || error.response?.data?.message || 'Error saving item');
       }
-      console.error('Error saving item:', error);
     } finally {
       setSubmitting(false);
     }
@@ -181,7 +183,8 @@ const AdmittionSetting = () => {
           last_name: '', 
           middle_name: '', 
           suffix: '', 
-          gender: 'male' 
+          gender: 'male',
+          physician: 'admitting'
         };
       default:
         return {};
@@ -293,18 +296,46 @@ const AdmittionSetting = () => {
                 />
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-              <select
-                value={formData.gender || 'male'}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                required
-                className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="others">Others</option>
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                <select
+                  value={formData.gender || 'male'}
+                  onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
+                  required
+                  className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="others">Others</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Physician Role *</label>
+                <select
+                  value={formData.physician || 'admitting'}
+                  onChange={(e) => setFormData({ ...formData, physician: e.target.value })}
+                  required
+                  className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="admitting">Admitting</option>
+                  <option value="attending">Attending</option>
+                </select>
+              </div>
+            </div>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-start space-x-2">
+                <div className="flex-shrink-0">
+                  <svg className="w-4 h-4 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="text-xs text-blue-700">
+                  <p className="font-semibold mb-1">Physician Roles:</p>
+                  <p><span className="font-medium">Admitting:</span> Physician who admits the patient to the hospital.</p>
+                  <p><span className="font-medium">Attending:</span> Physician primarily responsible for patient care during the stay.</p>
+                </div>
+              </div>
             </div>
           </div>
         );
@@ -379,7 +410,19 @@ const AdmittionSetting = () => {
                     Dr. {item.first_name} {item.middle_name && item.middle_name + ' '}{item.last_name} {item.suffix}
                   </h3>
                 </div>
-                <p className="text-sm text-gray-600 capitalize">{item.gender}</p>
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-600 capitalize">{item.gender}</p>
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    item.physician === 'attending' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-green-100 text-green-800'
+                  }`}>
+                    {item.physician ? 
+                      item.physician.charAt(0).toUpperCase() + item.physician.slice(1) + ' Physician'
+                      : 'Admitting Physician'
+                    }
+                  </span>
+                </div>
               </div>
               <div className="flex space-x-2 ml-3">
                 <button
@@ -489,6 +532,7 @@ const AdmittionSetting = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -499,6 +543,18 @@ const AdmittionSetting = () => {
                     Dr. {physician.first_name} {physician.middle_name && physician.middle_name + ' '}{physician.last_name} {physician.suffix}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">{physician.gender}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      physician.physician === 'attending' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {physician.physician ? 
+                        physician.physician.charAt(0).toUpperCase() + physician.physician.slice(1)
+                        : 'Admitting'
+                      }
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button
@@ -795,6 +851,7 @@ const AdmittionSetting = () => {
                     <th className="px-6 py-3"><Skeleton height={16} width={80} /></th>
                     <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
                     <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
+                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -803,6 +860,7 @@ const AdmittionSetting = () => {
                       <td className="px-6 py-4"><Skeleton height={16} width={40} /></td>
                       <td className="px-6 py-4"><Skeleton height={16} width={200} /></td>
                       <td className="px-6 py-4"><Skeleton height={16} width={60} /></td>
+                      <td className="px-6 py-4"><Skeleton height={16} width={80} /></td>
                       <td className="px-6 py-4">
                         <div className="flex space-x-2">
                           <Skeleton height={16} width={16} />
@@ -1048,4 +1106,4 @@ const AdmittionSetting = () => {
   );
 };
 
-export default AdmittionSetting;
+export default AdmissionSetting;

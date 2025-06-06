@@ -15,6 +15,7 @@ class PatientPhysician extends Model
         'middle_name',
         'suffix',
         'gender',
+        'physician',
         'DateCreated',
         'CreatedBy',
         'DateModified',
@@ -26,7 +27,32 @@ class PatientPhysician extends Model
         'DateModified' => 'datetime',
     ];
 
-    public function patients(): HasMany
+    public function getFullNameAttribute()
+    {
+        return trim($this->first_name . ' ' . $this->middle_name . ' ' . $this->last_name . ' ' . $this->suffix);
+    }
+
+    public function getDisplayNameAttribute()
+    {
+        return "Dr. {$this->full_name} (" . ucfirst($this->physician) . ")";
+    }
+
+    public function scopeOfType($query, $type)
+    {
+        return $query->where('physician', $type);
+    }
+
+    public function scopeAdmitting($query)
+    {
+        return $query->where('physician', 'admitting');
+    }
+
+    public function scopeAttending($query)
+    {
+        return $query->where('physician', 'attending');
+    }
+
+    public function patients()
     {
         return $this->hasMany(Patient::class, 'ptphysician_id');
     }

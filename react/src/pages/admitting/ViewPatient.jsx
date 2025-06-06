@@ -500,10 +500,28 @@ const ViewPatient = () => {
                   </div>
                   
                   <div>
-                    <label className="text-sm font-medium text-gray-500 mb-1 block">Attending Physician</label>
-                    <p className="text-lg text-gray-900">
-                      Dr. {patient.patient_physician?.first_name} {patient.patient_physician?.middle_name} {patient.patient_physician?.last_name} {patient.patient_physician?.suffix}
-                    </p>
+                    <label className="flex items-center text-sm font-medium text-gray-500 mb-1">
+                      <IdentificationIcon className="w-4 h-4 mr-2" />
+                      Physician
+                    </label>
+                    <div className="space-y-1">
+                      <p className="text-lg text-gray-900">
+                        Dr. {patient.patient_physician?.first_name} {patient.patient_physician?.middle_name ? `${patient.patient_physician.middle_name} ` : ''}{patient.patient_physician?.last_name}{patient.patient_physician?.suffix ? ` ${patient.patient_physician.suffix}` : ''}
+                      </p>
+                      {/* Display Physician Role */}
+                      <div className="flex items-center">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          patient.patient_physician?.physician === 'attending' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {patient.patient_physician?.physician ? 
+                            patient.patient_physician.physician.charAt(0).toUpperCase() + patient.patient_physician.physician.slice(1) + ' Physician'
+                            : 'Admitting Physician'
+                          }
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 
@@ -513,7 +531,7 @@ const ViewPatient = () => {
                     <p className="text-lg text-gray-900 capitalize">{patient.patient_physician?.gender}</p>
                   </div>
                   
-                  <div>
+                  {/* <div>
                     <label className="flex items-center text-sm font-medium text-gray-500 mb-1">
                       <CalendarIcon className="w-4 h-4 mr-2" />
                       Record Created
@@ -521,12 +539,27 @@ const ViewPatient = () => {
                     <p className="text-lg text-gray-900">
                       {new Date(patient.DateCreated).toLocaleDateString()}
                     </p>
-                  </div>
+                  </div> */}
                   
                   <div>
                     <label className="text-sm font-medium text-gray-500 mb-1 block">Created By</label>
                     <p className="text-lg text-gray-900">{patient.CreatedBy}</p>
                   </div>
+                  
+                  {/* Additional Physician Information */}
+                  {patient.patient_physician?.physician && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500 mb-1 block">Physician Role</label>
+                      <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-sm text-gray-700">
+                          {patient.patient_physician.physician === 'attending' 
+                            ? 'This physician is primarily responsible for the patient\'s care during their hospital stay.'
+                            : 'This physician admitted the patient to the hospital and initiated their care.'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

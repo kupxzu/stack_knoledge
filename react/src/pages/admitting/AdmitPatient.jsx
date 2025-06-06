@@ -34,7 +34,8 @@ const AdmitPatient = () => {
     physician_last_name: '',
     physician_middle_name: '',
     physician_suffix: '',
-    physician_gender: 'male'
+    physician_gender: 'male',
+    physician_type: 'admitting'
   });
 
   const [loading, setLoading] = useState(false);
@@ -53,7 +54,9 @@ const AdmitPatient = () => {
     last_name: '',
     middle_name: '',
     suffix: '',
-    gender: 'male'
+    gender: 'male',
+    physician_type: 'admitting'
+
   });
 
   const [addressInputMode, setAddressInputMode] = useState('select');
@@ -68,7 +71,7 @@ const AdmitPatient = () => {
         const [addressesRes, roomsRes, physiciansRes] = await Promise.all([
           api.get('/patient-addresses?per_page=1000'),
           api.get('/patient-rooms?per_page=1000'),
-          api.get('/patient-physicians?per_page=1000')
+          api.get('/patient-physicians?per_page=1000') // Keep this endpoint
         ]);
 
         setAddresses(addressesRes.data.data.map(addr => addr.address) || []);
@@ -173,7 +176,8 @@ const AdmitPatient = () => {
       physician_last_name: physician.last_name,
       physician_middle_name: physician.middle_name || '',
       physician_suffix: physician.suffix || '',
-      physician_gender: physician.gender
+      physician_gender: physician.gender,
+      physician_type: physician.physician || 'admitting' 
     });
   };
 
@@ -182,12 +186,13 @@ const AdmitPatient = () => {
     if (!newPhysician.first_name.trim() || !newPhysician.last_name.trim()) return;
 
     try {
-      const response = await api.post('/patient-physicians', {
+      const response = await api.post('/patient-physicians', { // Use consistent endpoint
         first_name: newPhysician.first_name.trim(),
         last_name: newPhysician.last_name.trim(),
         middle_name: newPhysician.middle_name.trim(),
         suffix: newPhysician.suffix.trim(),
-        gender: newPhysician.gender
+        gender: newPhysician.gender,
+        physician_type: newPhysician.physician_type
       });
       
       const newPhysicianData = {
@@ -196,7 +201,8 @@ const AdmitPatient = () => {
         last_name: newPhysician.last_name.trim(),
         middle_name: newPhysician.middle_name.trim(),
         suffix: newPhysician.suffix.trim(),
-        gender: newPhysician.gender
+        gender: newPhysician.gender,
+        physician: newPhysician.physician_type
       };
       
       // Add to dropdown list
@@ -209,7 +215,9 @@ const AdmitPatient = () => {
         physician_last_name: newPhysicianData.last_name,
         physician_middle_name: newPhysicianData.middle_name,
         physician_suffix: newPhysicianData.suffix,
-        physician_gender: newPhysicianData.gender
+        physician_gender: newPhysicianData.gender,
+        physician_type: newPhysicianData.physician
+
       });
       
       // Close modal
@@ -218,7 +226,9 @@ const AdmitPatient = () => {
         last_name: '',
         middle_name: '',
         suffix: '',
-        gender: 'male'
+        gender: 'male',
+        physician_type: 'admitting'
+
       });
       setShowPhysicianModal(false);
     } catch (error) {
@@ -256,7 +266,8 @@ const AdmitPatient = () => {
           physician_last_name: '',
           physician_middle_name: '',
           physician_suffix: '',
-          physician_gender: 'male'
+          physician_gender: 'male',
+          physician_type: 'admitting'
         });
 
         // Reset search
@@ -581,7 +592,8 @@ const AdmitPatient = () => {
                         physician_last_name: '',
                         physician_middle_name: '',
                         physician_suffix: '',
-                        physician_gender: 'male'
+                        physician_gender: 'male',
+                        physician_type: 'admitting'
                       });
                     }
                   }}
@@ -592,6 +604,7 @@ const AdmitPatient = () => {
                   {physicians.map((physician) => (
                     <option key={physician.id} value={`${physician.first_name} ${physician.last_name}`}>
                       Dr. {physician.first_name} {physician.middle_name && `${physician.middle_name} `}{physician.last_name} {physician.suffix}
+                      {physician.physician && ` (${physician.physician.charAt(0).toUpperCase() + physician.physician.slice(1)})`}
                     </option>
                   ))}
                 </select>
@@ -685,7 +698,7 @@ const AdmitPatient = () => {
       {/* Physician Modal */}
       {showPhysicianModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Add New Physician</h3>
@@ -735,17 +748,30 @@ const AdmitPatient = () => {
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
-                <select
-                  value={newPhysician.gender}
-                  onChange={(e) => setNewPhysician({ ...newPhysician, gender: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="others">Others</option>
-                </select>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
+                  <select
+                    value={newPhysician.gender}
+                    onChange={(e) => setNewPhysician({ ...newPhysician, gender: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="others">Others</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Physician Type *</label>
+                  <select
+                    value={newPhysician.physician_type}
+                    onChange={(e) => setNewPhysician({ ...newPhysician, physician_type: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="admitting">Admitting</option>
+                    <option value="attending">Attending</option>
+                  </select>
+                </div>
               </div>
             </div>
             <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
@@ -770,4 +796,4 @@ const AdmitPatient = () => {
   );
 };
 
-export default AdmitPatient;  
+export default AdmitPatient;

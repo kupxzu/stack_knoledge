@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('middle_name')->nullable();
             $table->string('suffix')->nullable();
             $table->enum('gender', ['male', 'female', 'others']);
+            $table->enum('physician', ['admitting', 'attending']);
             $table->timestamp('DateCreated');
             $table->string('CreatedBy');
             $table->timestamp('DateModified')->nullable();

@@ -214,6 +214,7 @@ class PatientController extends Controller
                 'physician_middle_name' => 'nullable|string|max:255',
                 'physician_suffix' => 'nullable|string|max:50',
                 'physician_gender' => 'required|in:male,female,others',
+                'physician_type' => 'required|in:admitting,attending', // Add this validation
             ]);
 
             DB::beginTransaction();
@@ -252,12 +253,13 @@ class PatientController extends Controller
                 ]
             );
 
-            // FIND OR CREATE physician (reuse existing if found)
+            // FIND OR CREATE physician (reuse existing if found) - Include physician type
             $patientPhysician = PatientPhysician::firstOrCreate(
                 [
                     'first_name' => $request->physician_first_name,
                     'last_name' => $request->physician_last_name,
                     'middle_name' => $request->physician_middle_name,
+                    'physician' => $request->physician_type, // Add physician type to search criteria
                 ],
                 [
                     'suffix' => $request->physician_suffix,
@@ -336,11 +338,12 @@ class PatientController extends Controller
                 'physician_middle_name' => 'nullable|string|max:255',
                 'physician_suffix' => 'nullable|string|max:50',
                 'physician_gender' => 'sometimes|required|in:male,female,others',
-
+                'physician_type' => 'sometimes|required|in:admitting,attending',
             ]);
 
             DB::beginTransaction();
 
+            // Update patient info (this stays the same)
             if ($request->hasAny(['first_name', 'last_name', 'gender', 'civil_status', 'dob', 'contact_number', 'admitted_date', 'middle_name', 'suffix'])) {
                 $patient->patientInfo->update(array_filter([
                     'first_name' => $request->first_name ?? $patient->patientInfo->first_name,
@@ -357,35 +360,59 @@ class PatientController extends Controller
                 ], function($value) { return $value !== null; }));
             }
 
+            // Update address (this stays the same)
             if ($request->has('address')) {
-                $patient->patientAddress->update([
-                    'address' => $request->address,
-                    'DateModified' => now(),
-                    'ModifiedBy' => $request->user()->username,
-                ]);
+                // Find or create address
+                $patientAddress = PatientAddress::firstOrCreate(
+                    ['address' => $request->address],
+                    [
+                        'DateCreated' => now(),
+                        'CreatedBy' => $request->user()->username,
+                    ]
+                );
+                
+                // Update patient to point to this address
+                $patient->update(['ptaddress_id' => $patientAddress->id]);
             }
 
+            // Update room (this stays the same)
             if ($request->hasAny(['room_name', 'room_description'])) {
-                $patient->patientRoom->update([
-                    'room_name' => $request->room_name ?? $patient->patientRoom->room_name,
-                    'description' => $request->room_description ?? $patient->patientRoom->description,
-                    'DateModified' => now(),
-                    'ModifiedBy' => $request->user()->username,
-                ]);
+                // Find or create room
+                $patientRoom = PatientRoom::firstOrCreate(
+                    ['room_name' => $request->room_name],
+                    [
+                        'description' => $request->room_description,
+                        'DateCreated' => now(),
+                        'CreatedBy' => $request->user()->username,
+                    ]
+                );
+                
+                // Update patient to point to this room
+                $patient->update(['ptroom_id' => $patientRoom->id]);
             }
 
-            if ($request->hasAny(['physician_first_name', 'physician_last_name', 'physician_gender', 'physician_middle_name', 'physician_suffix'])) {
-                $patient->patientPhysician->update(array_filter([
-                    'first_name' => $request->physician_first_name ?? $patient->patientPhysician->first_name,
-                    'last_name' => $request->physician_last_name ?? $patient->patientPhysician->last_name,
-                    'middle_name' => $request->physician_middle_name ?? $patient->patientPhysician->middle_name,
-                    'suffix' => $request->physician_suffix ?? $patient->patientPhysician->suffix,
-                    'gender' => $request->physician_gender ?? $patient->patientPhysician->gender,
-                    'DateModified' => now(),
-                    'ModifiedBy' => $request->user()->username,
-                ], function($value) { return $value !== null; }));
+            // FIX: Update physician - FIND OR CREATE instead of updating existing
+            if ($request->hasAny(['physician_first_name', 'physician_last_name', 'physician_gender', 'physician_middle_name', 'physician_suffix', 'physician_type'])) {
+                
+                // Find or create the physician record
+                $patientPhysician = PatientPhysician::firstOrCreate(
+                    [
+                        'first_name' => $request->physician_first_name,
+                        'last_name' => $request->physician_last_name,
+                        'middle_name' => $request->physician_middle_name,
+                        'physician' => $request->physician_type,
+                    ],
+                    [
+                        'suffix' => $request->physician_suffix,
+                        'gender' => $request->physician_gender,
+                        'DateCreated' => now(),
+                        'CreatedBy' => $request->user()->username,
+                    ]
+                );
+                
+                // Update patient to point to this physician
+                $patient->update(['ptphysician_id' => $patientPhysician->id]);
             }
-
 
             DB::commit();
 
@@ -489,7 +516,7 @@ class PatientController extends Controller
             $perPage = $request->get('per_page', 10);
             $search = $request->get('search', '');
 
-            $query = PatientPhysician::select('id', 'first_name', 'last_name', 'middle_name', 'suffix', 'gender');
+            $query = PatientPhysician::select('id', 'first_name', 'last_name', 'middle_name', 'suffix', 'gender', 'physician');
 
             if ($search) {
                 $query->where('first_name', 'like', '%' . $search . '%')
@@ -562,27 +589,50 @@ class PatientController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
+            // FIX: Convert array to JSON string for logging
+            \Log::info('Store physician request data: ' . json_encode($request->all()));
+
             $request->validate([
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
                 'middle_name' => 'nullable|string|max:255',
                 'suffix' => 'nullable|string|max:50',
                 'gender' => 'required|in:male,female,others',
+                'physician' => 'required|in:admitting,attending',
             ]);
 
-            $patientPhysician = PatientPhysician::create([
+            $createData = [
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'middle_name' => $request->middle_name,
                 'suffix' => $request->suffix,
                 'gender' => $request->gender,
+                'physician' => $request->physician,
                 'DateCreated' => now(),
                 'CreatedBy' => $request->user()->username,
-            ]);
+            ];
 
-            return response()->json(['data' => $patientPhysician, 'message' => 'Physician created successfully'], 201);
+            // Remove null values
+            $createData = array_filter($createData, function($value) {
+                return $value !== null && $value !== '';
+            });
+
+            \Log::info('Create data: ' . json_encode($createData));
+
+            $patientPhysician = PatientPhysician::create($createData);
+
+            return response()->json([
+                'data' => $patientPhysician, 
+                'message' => 'Physician created successfully'
+            ], 201);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error: ' . json_encode($e->errors()));
+            return response()->json(['error' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Unable to create physician'], 500);
+            \Log::error('Error creating physician: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Unable to create physician: ' . $e->getMessage()], 500);
         }
     }
 
@@ -675,28 +725,56 @@ class PatientController extends Controller
                 return response()->json(['error' => 'Unauthorized'], 403);
             }
 
+            // FIX: Remove the problematic Log::info calls or fix them
+            \Log::info('Update physician request data: ' . json_encode($request->all()));
+            \Log::info('Physician ID: ' . $id);
+
             $request->validate([
                 'first_name' => 'required|string|max:255',
                 'last_name' => 'required|string|max:255',
                 'middle_name' => 'nullable|string|max:255',
                 'suffix' => 'nullable|string|max:50',
                 'gender' => 'required|in:male,female,others',
+                'physician' => 'required|in:admitting,attending',
             ]);
 
             $patientPhysician = PatientPhysician::findOrFail($id);
-            $patientPhysician->update([
+            
+            $updateData = [
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'middle_name' => $request->middle_name,
                 'suffix' => $request->suffix,
                 'gender' => $request->gender,
+                'physician' => $request->physician,
                 'DateModified' => now(),
                 'ModifiedBy' => $request->user()->username,
+            ];
+
+            // Remove null values to avoid database errors
+            $updateData = array_filter($updateData, function($value) {
+                return $value !== null && $value !== '';
+            });
+
+            \Log::info('Update data: ' . json_encode($updateData));
+
+            $patientPhysician->update($updateData);
+
+            return response()->json([
+                'data' => $patientPhysician->fresh(), 
+                'message' => 'Physician updated successfully'
             ]);
 
-            return response()->json(['data' => $patientPhysician, 'message' => 'Physician updated successfully']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            \Log::error('Physician not found: ' . $e->getMessage());
+            return response()->json(['error' => 'Physician not found'], 404);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error: ' . json_encode($e->errors()));
+            return response()->json(['error' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Unable to update physician'], 500);
+            \Log::error('Error updating physician: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Unable to update physician: ' . $e->getMessage()], 500);
         }
     }
 
@@ -712,6 +790,7 @@ class PatientController extends Controller
 
             return response()->json(['message' => 'Physician deleted successfully']);
         } catch (\Exception $e) {
+            \Log::error('Error deleting physician: ' . $e->getMessage());
             return response()->json(['error' => 'Unable to delete physician'], 500);
         }
     }

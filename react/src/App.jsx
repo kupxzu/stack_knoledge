@@ -13,7 +13,7 @@ import AdmitPatientList from '@pages/admitting/AdmitPatientList';
 import AdmittingDash from '@pages/admitting/AdmittingDash';
 import ViewPatient from '@pages/admitting/ViewPatient';
 import EditPatient from '@pages/admitting/EditPatient';
-import AdmittionSetting from '@pages/admitting/AdmittionSetting';
+import AdmissionSetting from '@pages/admitting/AdmissionSetting';
 
 import BillingDash from '@pages/billing/BillingDash';
 import BillingTransaction from '@pages/billing/BillingTransaction';
@@ -126,7 +126,7 @@ function App() {
             path="/admitting/settings" 
             element={
               <ProtectedRoute allowedRoles={['admin', 'admitting']}>
-                <AdmittionSetting />
+                <AdmissionSetting />
               </ProtectedRoute>
             }
           />
