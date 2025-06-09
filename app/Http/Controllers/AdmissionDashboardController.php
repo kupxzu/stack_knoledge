@@ -7,11 +7,13 @@ use App\Models\PatientInfo;
 use App\Models\PatientRoom;
 use App\Models\PatientPhysician;
 use App\Models\PatientAddress;
+use App\Models\PatientTransaction;
+use App\Models\PatientQR;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
-class DashboardController extends Controller
+class AdmissionDashboardController extends Controller
 {
     public function getStats(Request $request)
     {
@@ -364,35 +366,34 @@ class DashboardController extends Controller
         ];
     }
 
-private function getTopPhysiciansData()
-{
-    try {
-        // Get top physicians by patient count, grouped by physician type
-        $physicians = PatientPhysician::select(
-                'patient_physician.id',
-                DB::raw('CONCAT(patient_physician.first_name, " ", patient_physician.last_name) as name'),
-                'patient_physician.physician as type',
-                DB::raw('COUNT(patients.id) as patients')
-            )
-            ->leftJoin('patients', 'patient_physician.id', '=', 'patients.ptphysician_id')
-            ->groupBy('patient_physician.id', 'patient_physician.first_name', 'patient_physician.last_name', 'patient_physician.physician')
-            ->orderBy('patients', 'desc')
-            ->limit(10)
-            ->get();
+    private function getTopPhysiciansData()
+    {
+        try {
+            // Get top physicians by patient count, grouped by physician type
+            $physicians = PatientPhysician::select(
+                    'patient_physician.id',
+                    DB::raw('CONCAT(patient_physician.first_name, " ", patient_physician.last_name) as name'),
+                    'patient_physician.physician as type',
+                    DB::raw('COUNT(patients.id) as patients')
+                )
+                ->leftJoin('patients', 'patient_physician.id', '=', 'patients.ptphysician_id')
+                ->groupBy('patient_physician.id', 'patient_physician.first_name', 'patient_physician.last_name', 'patient_physician.physician')
+                ->orderBy('patients', 'desc')
+                ->limit(10)
+                ->get();
 
-        return $physicians->map(function ($physician) {
-            return [
-                'name' => $physician->name,
-                'type' => ucfirst($physician->type), // Capitalize type
-                'patients' => (int) $physician->patients,
-                'displayName' => "Dr. {$physician->name} (" . ucfirst($physician->type) . ")"
-            ];
-        })->toArray();
-    } catch (\Exception $e) {
-        return [];
+            return $physicians->map(function ($physician) {
+                return [
+                    'name' => $physician->name,
+                    'type' => ucfirst($physician->type), // Capitalize type
+                    'patients' => (int) $physician->patients,
+                    'displayName' => "Dr. {$physician->name} (" . ucfirst($physician->type) . ")"
+                ];
+            })->toArray();
+        } catch (\Exception $e) {
+            return [];
+        }
     }
-}
-
 
     private function getRandomColor()
     {

@@ -93,7 +93,7 @@ const AdminNavSide = ({ children }) => {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
+      navigate('/login'); // Redirect to login after logout
     } catch (error) {
       console.error('Logout error:', error);
     }

@@ -4,12 +4,11 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 
-
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    react()
-    , tailwindcss({
+    react(),
+    tailwindcss({
       config: {
         content: ['./src/**/*.{js,jsx,ts,tsx}'],
         theme: {
@@ -54,10 +53,26 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/a\.view:8080\/api\/.*/i,
+            // Match any localhost or a.view domain with any port
+            urlPattern: /^https?:\/\/(localhost|127\.0\.0\.1|a\.view):?\d*\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Catch-all for any API endpoints
+            urlPattern: /\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache-fallback',
               expiration: {
                 maxEntries: 10,
                 maxAgeSeconds: 60 * 60 * 24 * 365
@@ -71,6 +86,18 @@ export default defineConfig({
       }
     })
   ],
+  server: {
+    host: '0.0.0.0', // Allow access from any IP
+    port: 3000, // Default port for React dev server
+    strictPort: false, // Allow fallback to other ports if 3000 is busy
+    cors: true, // Enable CORS for all origins
+  },
+  preview: {
+    host: '0.0.0.0', // Allow access from any IP in preview mode
+    port: 4173, // Default preview port
+    strictPort: false,
+    cors: true,
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

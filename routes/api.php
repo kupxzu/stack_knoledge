@@ -3,7 +3,9 @@
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PatientQRTPAController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AdmissionDashboardController;
+use App\Http\Controllers\BillingDashboardController;
+use App\Http\Controllers\BillingReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -77,8 +79,25 @@ Route::middleware('auth:sanctum')->group(function () {
     
     Route::post('/patients/{id}/regenerate-qr', [PatientQRTPAController::class, 'regenerateQRAndPortal']);
 
-    // Dashboard routes
-    Route::get('/dashboard/stats', [DashboardController::class, 'getStats']);
-    Route::get('/dashboard/trends', [DashboardController::class, 'getTrends']);
-    Route::get('/dashboard/charts', [DashboardController::class, 'getChartData']);
+    // Admitting Dashboard routes
+        Route::get('/dashboard/stats', [AdmissionDashboardController::class, 'getStats']);
+        Route::get('/dashboard/trends', [AdmissionDashboardController::class, 'getTrends']);
+        Route::get('/dashboard/charts', [AdmissionDashboardController::class, 'getChartData']); 
+
+    // Billing Dashboard Routes
+     Route::prefix('billing/dashboard')->group(function () {
+        Route::get('/stats', [BillingDashboardController::class, 'getStats']);
+        Route::get('/discharge-stats', [BillingDashboardController::class, 'getDischargeStats']);
+        Route::get('/transaction-stats', [BillingDashboardController::class, 'getTransactionStats']);
+        Route::get('/physician-stats', [BillingDashboardController::class, 'getPhysicianStats']);
+        Route::get('/patients-list', [BillingDashboardController::class, 'getPatientsList']);
+      }); 
+    // Billing Report Routes
+    Route::prefix('billing/reports')->group(function () {
+        Route::get('/', [BillingReportController::class, 'getReports']);
+        Route::get('/stats', [BillingReportController::class, 'getReportStats']);
+        Route::get('/export', [BillingReportController::class, 'exportReports']);
+    });
+        Route::get('billing/reports/test', [BillingReportController::class, 'test']);
+    
 });

@@ -17,6 +17,7 @@ import AdmissionSetting from '@pages/admitting/AdmissionSetting';
 
 import BillingDash from '@pages/billing/BillingDash';
 import BillingTransaction from '@pages/billing/BillingTransaction';
+import BillingReport from '@pages/billing/BillingReport';
 
 import PatientPortal from '@pages/portal/PatientPortal';
 
@@ -147,6 +148,14 @@ function App() {
                 <BillingTransaction />
               </ProtectedRoute>
             } 
+          />
+          <Route 
+            path="/billing/reports" 
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'billing']}>
+                <BillingReport />
+              </ProtectedRoute>
+            }
           />
           
           <Route path="/" element={<Navigate to="/dashboard" replace />} />

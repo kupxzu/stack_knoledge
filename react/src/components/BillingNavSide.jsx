@@ -85,6 +85,7 @@ const BillingNavSide = memo(({ children }) => {
       bgColor: 'bg-amber-50',
       borderColor: 'border-amber-500'
     },
+    
   ];
 
   // Update active item based on current route
