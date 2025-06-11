@@ -1,6 +1,6 @@
 
-export const replaceUrl = (url, backendUrl = 'http://a.view:8080', frontendUrl = 'http://localhost:5173') => {
-  if (!url) return '';
+
+ export const replaceUrl = (url, backendUrl = 'http://a.view:8080', frontendUrl = 'http://localhost:3000') => {  if (!url) return '';
   return url.replace(backendUrl, frontendUrl);
 };
 

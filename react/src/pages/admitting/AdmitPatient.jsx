@@ -8,7 +8,10 @@ import {
   ExclamationTriangleIcon,
   UserIcon,
   BuildingOfficeIcon,
-  MapPinIcon
+  MapPinIcon,
+  UserPlusIcon,
+  CalendarDaysIcon,
+  PhoneIcon
 } from '@heroicons/react/24/outline';
 
 const AdmitPatient = () => {
@@ -56,22 +59,22 @@ const AdmitPatient = () => {
     suffix: '',
     gender: 'male',
     physician_type: 'admitting'
-
   });
 
   const [addressInputMode, setAddressInputMode] = useState('select');
   const [addressSearchTerm, setAddressSearchTerm] = useState('');
   const [filteredAddresses, setFilteredAddresses] = useState([]);
   const [showAddressDropdown, setShowAddressDropdown] = useState(false);
+  const [showRoomDropdown, setShowRoomDropdown] = useState(false);
 
-  // Load initial data ONCE
+  // Load initial data
   useEffect(() => {
     const loadInitialData = async () => {
       try {
         const [addressesRes, roomsRes, physiciansRes] = await Promise.all([
           api.get('/patient-addresses?per_page=1000'),
           api.get('/patient-rooms?per_page=1000'),
-          api.get('/patient-physicians?per_page=1000') // Keep this endpoint
+          api.get('/patient-physicians?per_page=1000')
         ]);
 
         setAddresses(addressesRes.data.data.map(addr => addr.address) || []);
@@ -106,7 +109,6 @@ const AdmitPatient = () => {
     });
   };
 
-  // Simple address selection
   const handleAddressSelect = (address) => {
     setFormData({ ...formData, address });
     setAddressSearchTerm(address);
@@ -125,7 +127,6 @@ const AdmitPatient = () => {
     }
   };
 
-  // Simple room selection
   const handleRoomSelect = (room) => {
     setFormData({
       ...formData,
@@ -134,7 +135,6 @@ const AdmitPatient = () => {
     });
   };
 
-  // Simple room addition
   const handleAddRoom = async () => {
     if (!newRoom.name.trim()) return;
 
@@ -150,17 +150,13 @@ const AdmitPatient = () => {
         description: newRoom.description.trim()
       };
       
-      // Add to dropdown list
       setRooms(prev => [...prev, newRoomData]);
-      
-      // Set in form
       setFormData({
         ...formData,
         room_name: newRoom.name.trim(),
         room_description: newRoom.description.trim()
       });
       
-      // Close modal
       setNewRoom({ name: '', description: '' });
       setShowRoomModal(false);
     } catch (error) {
@@ -168,7 +164,6 @@ const AdmitPatient = () => {
     }
   };
 
-  // Simple physician selection
   const handlePhysicianSelect = (physician) => {
     setFormData({
       ...formData,
@@ -181,12 +176,11 @@ const AdmitPatient = () => {
     });
   };
 
-  // Simple physician addition
   const handleAddPhysician = async () => {
     if (!newPhysician.first_name.trim() || !newPhysician.last_name.trim()) return;
 
     try {
-      const response = await api.post('/patient-physicians', { // Use consistent endpoint
+      const response = await api.post('/patient-physicians', {
         first_name: newPhysician.first_name.trim(),
         last_name: newPhysician.last_name.trim(),
         middle_name: newPhysician.middle_name.trim(),
@@ -205,10 +199,7 @@ const AdmitPatient = () => {
         physician: newPhysician.physician_type
       };
       
-      // Add to dropdown list
       setPhysicians(prev => [...prev, newPhysicianData]);
-      
-      // Set in form
       setFormData({
         ...formData,
         physician_first_name: newPhysicianData.first_name,
@@ -217,10 +208,8 @@ const AdmitPatient = () => {
         physician_suffix: newPhysicianData.suffix,
         physician_gender: newPhysicianData.gender,
         physician_type: newPhysicianData.physician
-
       });
       
-      // Close modal
       setNewPhysician({
         first_name: '',
         last_name: '',
@@ -228,7 +217,6 @@ const AdmitPatient = () => {
         suffix: '',
         gender: 'male',
         physician_type: 'admitting'
-
       });
       setShowPhysicianModal(false);
     } catch (error) {
@@ -236,7 +224,6 @@ const AdmitPatient = () => {
     }
   };
 
-  // SUPER SIMPLE SUBMIT
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -270,7 +257,6 @@ const AdmitPatient = () => {
           physician_type: 'admitting'
         });
 
-        // Reset search
         setAddressSearchTerm('');
         setFilteredAddresses([]);
         setShowAddressDropdown(false);
@@ -284,373 +270,409 @@ const AdmitPatient = () => {
 
   return (
     <AdmittingNavSide>
-      <div className="w-full max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-6 lg:mb-8">
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Admit New Patient</h1>
-          <p className="text-gray-600 mt-1">Fill in the patient information to complete admission</p>
-        </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
 
-        {/* Success/Error Message */}
-        {message && (
-          <div className={`mb-6 p-4 rounded-lg border ${
-            message.includes('successfully') 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
-            <div className="flex items-center">
-              {message.includes('successfully') ? (
-                <CheckCircleIcon className="w-5 h-5 mr-2" />
-              ) : (
-                <ExclamationTriangleIcon className="w-5 h-5 mr-2" />
-              )}
-              {message}
-            </div>
-          </div>
-        )}
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8">
-          {/* Patient Information Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8">
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <UserIcon className="w-5 h-5 mr-2 text-blue-600" />
-              Patient Information
-            </h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="first_name"
-                  value={formData.first_name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter first name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="last_name"
-                  value={formData.last_name}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter last name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name</label>
-                <input
-                  type="text"
-                  name="middle_name"
-                  value={formData.middle_name}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter middle name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Suffix</label>
-                <input
-                  type="text"
-                  name="suffix"
-                  value={formData.suffix}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Jr., Sr., etc."
-                />
+          {/* Success/Error Message */}
+          {message && (
+            <div className={`mb-6 p-4 rounded-2xl border transition-all duration-200 ${
+              message.includes('successfully') 
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                : 'bg-red-50 border-red-200 text-red-800'
+            }`}>
+              <div className="flex items-center">
+                {message.includes('successfully') ? (
+                  <CheckCircleIcon className="w-5 h-5 mr-3 flex-shrink-0" />
+                ) : (
+                  <ExclamationTriangleIcon className="w-5 h-5 mr-3 flex-shrink-0" />
+                )}
+                <span className="font-medium">{message}</span>
               </div>
             </div>
+          )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Civil Status <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="civil_status"
-                  value={formData.civil_status}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  <option value="single">Single</option>
-                  <option value="married">Married</option>
-                  <option value="widowed">Widowed</option>
-                  <option value="divorced">Divorced</option>
-                  <option value="separated">Separated</option>
-                </select>
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6 lg:space-y-8">
+            {/* Patient Information Section */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-8 shadow-sm">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <UserIcon className="w-6 h-6 text-gray-600" />
+                </div>
+                <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Admit New Patient Information</h2>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Gender <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="others">Others</option>
-                </select>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 lg:gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    First Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter first name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Last Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter last name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name</label>
+                  <input
+                    type="text"
+                    name="middle_name"
+                    value={formData.middle_name}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter middle name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Suffix</label>
+                  <input
+                    type="text"
+                    name="suffix"
+                    value={formData.suffix}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Jr., Sr., etc."
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Date of Birth <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="dob"
-                  value={formData.dob}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Civil Status <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="civil_status"
+                    value={formData.civil_status}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="single">Single</option>
+                    <option value="married">Married</option>
+                    <option value="widowed">Widowed</option>
+                    <option value="divorced">Divorced</option>
+                    <option value="separated">Separated</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Gender <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="others">Others</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Date of Birth <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="dob"
+                    value={formData.dob}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Contact & Admission Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8">
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <BuildingOfficeIcon className="w-5 h-5 mr-2 text-blue-600" />
-              Contact & Admission Details
-            </h2>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact Number <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="contact_number"
-                  value={formData.contact_number}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  placeholder="Enter contact number"
-                />
+            {/* Contact & Admission Information */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-8 shadow-sm">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <PhoneIcon className="w-6 h-6 text-gray-600" />
+                </div>
+                <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Contact & Admission Details</h2>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Admitted Date <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  name="admitted_date"
-                  value={formData.admitted_date}
-                  onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Contact Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="contact_number"
+                    value={formData.contact_number}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter contact number"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Admitted Date <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="admitted_date"
+                    value={formData.admitted_date}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Room <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <button
+                        type="button"
+                        onClick={() => setShowRoomDropdown(!showRoomDropdown)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 text-left bg-white flex items-center justify-between"
+                      >
+                        <span className={formData.room_name ? 'text-gray-900' : 'text-gray-500'}>
+                          {formData.room_name || 'Select room'}
+                        </span>
+                        <svg className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showRoomDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      
+                      {showRoomDropdown && (
+                        <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                          <div className="p-2">
+                            {rooms.map((room) => (
+                              <button
+                                key={room.id}
+                                type="button"
+                                onClick={() => {
+                                  handleRoomSelect(room);
+                                  setShowRoomDropdown(false);
+                                }}
+                                className="w-full text-left px-3 py-3 hover:bg-gray-50 rounded-lg transition-colors duration-150 border-b border-gray-100 last:border-b-0"
+                              >
+                                <div className="font-medium text-gray-900">{room.name}</div>
+                                {room.description && (
+                                  <div className="text-sm text-gray-500 mt-1 break-words">
+                                    {room.description}
+                                  </div>
+                                )}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setShowRoomModal(true)}
+                      className="px-3 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all duration-200 border border-gray-200 flex-shrink-0"
+                      title="Add new room"
+                    >
+                      <PlusIcon className="w-5 h-5" />
+                    </button>
+                  </div>
+                  
+                  {/* Show selected room details */}
+                  {formData.room_name && formData.room_description && (
+                    <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="text-sm text-green-900">
+                        <span className="font-medium">{formData.room_name}:</span> {formData.room_description}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* Address */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Address <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-600">Add New</span>
+                    <button
+                      type="button"
+                      onClick={() => setAddressInputMode(addressInputMode === 'select' ? 'manual' : 'select')}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                        addressInputMode === 'manual' ? 'bg-blue-600' : 'bg-gray-200'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                          addressInputMode === 'manual' ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+                
+                {addressInputMode === 'select' ? (
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={addressSearchTerm}
+                      onChange={handleAddressSearchChange}
+                      onFocus={() => {
+                        if (addressSearchTerm.length > 0 && filteredAddresses.length > 0) {
+                          setShowAddressDropdown(true);
+                        }
+                      }}
+                      onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
+                      placeholder="Search existing addresses..."
+                      required
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    />
+                    
+                    {showAddressDropdown && filteredAddresses.length > 0 && (
+                      <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                        {filteredAddresses.map((address, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => handleAddressSelect(address)}
+                            className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition-colors duration-150"
+                          >
+                            {address}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder="Enter complete address"
+                    required
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Physician Information */}
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 lg:p-8 shadow-sm">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+                  <UserIcon className="w-6 h-6 text-gray-600" />
+                </div>
+                <h2 className="text-lg lg:text-xl font-semibold text-gray-900">Physician Information</h2>
+              </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Room <span className="text-red-500">*</span>
+                  Physician <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
                   <select
-                    value={formData.room_name}
+                    value={formData.physician_first_name && formData.physician_last_name ? 
+                      `${formData.physician_first_name} ${formData.physician_last_name}` : ''
+                    }
                     onChange={(e) => {
-                      const selectedRoom = rooms.find(room => room.name === e.target.value);
-                      if (selectedRoom) {
-                        handleRoomSelect(selectedRoom);
+                      const selectedPhysician = physicians.find(physician => 
+                        `${physician.first_name} ${physician.last_name}` === e.target.value
+                      );
+                      if (selectedPhysician) {
+                        handlePhysicianSelect(selectedPhysician);
                       } else {
-                        setFormData({ ...formData, room_name: '', room_description: '' });
+                        setFormData({
+                          ...formData,
+                          physician_first_name: '',
+                          physician_last_name: '',
+                          physician_middle_name: '',
+                          physician_suffix: '',
+                          physician_gender: 'male',
+                          physician_type: 'admitting'
+                        });
                       }
                     }}
-                    className="flex-1 w-50 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     required
                   >
-                    <option value="">Select room</option>
-                    {rooms.map((room) => (
-                      <option key={room.id} value={room.name}>
-                        {room.name} - {room.description}
+                    <option value="">Select physician</option>
+                    {physicians.map((physician) => (
+                      <option key={physician.id} value={`${physician.first_name} ${physician.last_name}`}>
+                        Dr. {physician.first_name} {physician.middle_name && `${physician.middle_name} `}{physician.last_name} {physician.suffix}
+                        {physician.physician && ` (${physician.physician.charAt(0).toUpperCase() + physician.physician.slice(1)})`}
                       </option>
                     ))}
                   </select>
                   <button
                     type="button"
-                    onClick={() => setShowRoomModal(true)}
-                    className="bg-blue-600 text-white px-3 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                    onClick={() => setShowPhysicianModal(true)}
+                    className="px-3 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all duration-200 border border-gray-200"
                   >
-                    <PlusIcon className="w-4 h-4" />
+                    <PlusIcon className="w-5 h-5" />
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Address */}
-            <div className="mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-gray-700">
-                  Address <span className="text-red-500">*</span>
-                </label>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">Add New</span>
-                  <button
-                    type="button"
-                    onClick={() => setAddressInputMode(addressInputMode === 'select' ? 'manual' : 'select')}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      addressInputMode === 'manual' ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        addressInputMode === 'manual' ? 'translate-x-6' : 'translate-x-1'
-                      }`}
-                    />
-                  </button>
-                </div>
-              </div>
-              
-              {addressInputMode === 'select' ? (
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={addressSearchTerm}
-                    onChange={handleAddressSearchChange}
-                    onFocus={() => {
-                      if (addressSearchTerm.length > 0 && filteredAddresses.length > 0) {
-                        setShowAddressDropdown(true);
-                      }
-                    }}
-                    onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
-                    placeholder="Search existing addresses..."
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  />
-                  
-                  {showAddressDropdown && filteredAddresses.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                      {filteredAddresses.map((address, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => handleAddressSelect(address)}
-                          className="w-full text-left px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
-                        >
-                          {address}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder="Enter complete address"
-                  required
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-                />
-              )}
+            {/* Submit Button */}
+            <div className="flex justify-end pb-6">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full sm:w-auto bg-gray-900 text-white px-8 py-3 rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Admitting Patient...
+                  </div>
+                ) : (
+                  'Admit Patient'
+                )}
+              </button>
             </div>
-          </div>
-
-          {/* Physician Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8">
-            <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <UserIcon className="w-5 h-5 mr-2 text-blue-600" />
-              Physician Information
-            </h2>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Physician <span className="text-red-500">*</span>
-              </label>
-              <div className="flex gap-3">
-                <select
-                  value={formData.physician_first_name && formData.physician_last_name ? 
-                    `${formData.physician_first_name} ${formData.physician_last_name}` : ''
-                  }
-                  onChange={(e) => {
-                    const selectedPhysician = physicians.find(physician => 
-                      `${physician.first_name} ${physician.last_name}` === e.target.value
-                    );
-                    if (selectedPhysician) {
-                      handlePhysicianSelect(selectedPhysician);
-                    } else {
-                      setFormData({
-                        ...formData,
-                        physician_first_name: '',
-                        physician_last_name: '',
-                        physician_middle_name: '',
-                        physician_suffix: '',
-                        physician_gender: 'male',
-                        physician_type: 'admitting'
-                      });
-                    }
-                  }}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  required
-                >
-                  <option value="">Select physician</option>
-                  {physicians.map((physician) => (
-                    <option key={physician.id} value={`${physician.first_name} ${physician.last_name}`}>
-                      Dr. {physician.first_name} {physician.middle_name && `${physician.middle_name} `}{physician.last_name} {physician.suffix}
-                      {physician.physician && ` (${physician.physician.charAt(0).toUpperCase() + physician.physician.slice(1)})`}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  onClick={() => setShowPhysicianModal(true)}
-                  className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-end pb-6">
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              {loading ? (
-                <div className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Admitting Patient...
-                </div>
-              ) : (
-                'Admit Patient'
-              )}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
 
       {/* Room Modal */}
       {showRoomModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-md">
+            <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Add New Room</h3>
-                <button onClick={() => setShowRoomModal(false)}>
-                  <XMarkIcon className="w-6 h-6 text-gray-400 hover:text-gray-600" />
+                <button 
+                  onClick={() => setShowRoomModal(false)}
+                  className="p-1 rounded-lg hover:bg-gray-100 transition-colors duration-150"
+                >
+                  <XMarkIcon className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
             </div>
@@ -661,7 +683,7 @@ const AdmitPatient = () => {
                   type="text"
                   value={newRoom.name}
                   onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   placeholder="e.g., Room 101"
                 />
               </div>
@@ -671,7 +693,7 @@ const AdmitPatient = () => {
                   type="text"
                   value={newRoom.description}
                   onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   placeholder="e.g., Private room"
                 />
               </div>
@@ -679,14 +701,14 @@ const AdmitPatient = () => {
             <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
               <button
                 onClick={() => setShowRoomModal(false)}
-                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-150"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddRoom}
                 disabled={!newRoom.name.trim()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="px-6 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors duration-150"
               >
                 Add Room
               </button>
@@ -697,25 +719,29 @@ const AdmitPatient = () => {
 
       {/* Physician Modal */}
       {showPhysicianModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Add New Physician</h3>
-                <button onClick={() => setShowPhysicianModal(false)}>
-                  <XMarkIcon className="w-6 h-6 text-gray-400 hover:text-gray-600" />
+                <button 
+                  onClick={() => setShowPhysicianModal(false)}
+                  className="p-1 rounded-lg hover:bg-gray-100 transition-colors duration-150"
+                >
+                  <XMarkIcon className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
             </div>
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
                   <input
                     type="text"
                     value={newPhysician.first_name}
                     onChange={(e) => setNewPhysician({ ...newPhysician, first_name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter first name"
                   />
                 </div>
                 <div>
@@ -724,18 +750,20 @@ const AdmitPatient = () => {
                     type="text"
                     value={newPhysician.last_name}
                     onChange={(e) => setNewPhysician({ ...newPhysician, last_name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter last name"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name</label>
                   <input
                     type="text"
                     value={newPhysician.middle_name}
                     onChange={(e) => setNewPhysician({ ...newPhysician, middle_name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Enter middle name"
                   />
                 </div>
                 <div>
@@ -744,17 +772,18 @@ const AdmitPatient = () => {
                     type="text"
                     value={newPhysician.suffix}
                     onChange={(e) => setNewPhysician({ ...newPhysician, suffix: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                    placeholder="Jr., Sr., etc."
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Gender</label>
                   <select
                     value={newPhysician.gender}
                     onChange={(e) => setNewPhysician({ ...newPhysician, gender: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
@@ -766,7 +795,7 @@ const AdmitPatient = () => {
                   <select
                     value={newPhysician.physician_type}
                     onChange={(e) => setNewPhysician({ ...newPhysician, physician_type: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   >
                     <option value="admitting">Admitting</option>
                     <option value="attending">Attending</option>
@@ -774,17 +803,17 @@ const AdmitPatient = () => {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex flex-col sm:flex-row justify-end gap-3">
               <button
                 onClick={() => setShowPhysicianModal(false)}
-                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-150"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddPhysician}
                 disabled={!newPhysician.first_name.trim() || !newPhysician.last_name.trim()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="px-6 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 transition-colors duration-150"
               >
                 Add Physician
               </button>

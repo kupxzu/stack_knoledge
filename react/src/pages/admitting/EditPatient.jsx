@@ -9,7 +9,8 @@ import {
   CheckCircleIcon,
   ChevronDownIcon,
   PlusIcon,
-  XMarkIcon // Add this import
+  XMarkIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 import AdmittingNavSide from '@/components/AdmittingNavSide';
 import api from '@/services/api';
@@ -74,100 +75,72 @@ const EditPatient = () => {
 
   // Skeleton Loading Component
   const EditPatientSkeleton = () => (
-    <SkeletonTheme baseColor="#f3f4f6" highlightColor="#e5e7eb">
+    <SkeletonTheme baseColor="#f8f9fa" highlightColor="#e9ecef">
       <div className="space-y-6">
         {/* Header Skeleton */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <Skeleton height={32} width={200} className="mb-2" />
-            <Skeleton height={20} width={300} />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+          <div className="flex items-center space-x-3">
+            <Skeleton circle height={32} width={32} />
+            <div>
+              <Skeleton height={32} width={200} className="mb-2" />
+              <Skeleton height={20} width={300} />
+            </div>
           </div>
-          <div className="flex gap-3 mt-4 sm:mt-0">
-            <Skeleton height={40} width={120} className="rounded-lg" />
+          <div className="flex gap-3">
+            <Skeleton height={40} width={120} className="rounded-xl" />
           </div>
         </div>
 
         {/* Main Content Layout Skeleton */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* QR Code Section Skeleton */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 h-fit">
+          <div className="lg:col-span-1 order-2 lg:order-1">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
               <div className="text-center space-y-6">
-                {/* Header */}
-                <div className="flex items-center justify-center mb-4">
-                  <Skeleton circle height={56} width={56} />
-                </div>
+                <Skeleton circle height={56} width={56} className="mx-auto" />
                 <Skeleton height={24} width={150} className="mx-auto" />
                 <Skeleton height={16} width={200} className="mx-auto" />
-
-                {/* QR Code Display */}
-                <Skeleton height={192} width={192} className="mx-auto rounded-lg" />
-
-                {/* QR Info */}
+                <Skeleton height={192} width={192} className="mx-auto rounded-xl" />
+                
                 <div className="space-y-3">
-                  {[...Array(4)].map((_, i) => (
+                  {[...Array(3)].map((_, i) => (
                     <div key={i} className="flex items-center justify-between">
                       <Skeleton height={16} width={80} />
                       <Skeleton height={16} width={100} />
                     </div>
                   ))}
                 </div>
-
-                {/* Action Buttons */}
+                
                 <div className="space-y-3">
-                  <Skeleton height={48} className="rounded-lg" />
-                  <Skeleton height={48} className="rounded-lg" />
+                  <Skeleton height={48} className="rounded-xl" />
                 </div>
               </div>
             </div>
           </div>
           
           {/* Form Section Skeleton */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+          <div className="lg:col-span-3 order-1 lg:order-2">
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
               <div className="space-y-6">
-                {/* Patient Information */}
-                <div>
-                  <Skeleton height={24} width={180} className="mb-4" />
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i}>
-                        <Skeleton height={16} width={100} className="mb-2" />
-                        <Skeleton height={48} className="rounded-lg" />
-                      </div>
-                    ))}
+                {/* Form sections */}
+                {[...Array(4)].map((_, sectionIndex) => (
+                  <div key={sectionIndex}>
+                    <Skeleton height={24} width={180} className="mb-4" />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i}>
+                          <Skeleton height={16} width={100} className="mb-2" />
+                          <Skeleton height={48} className="rounded-xl" />
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
-                    {[...Array(4)].map((_, i) => (
-                      <div key={i}>
-                        <Skeleton height={16} width={80} className="mb-2" />
-                        <Skeleton height={48} className="rounded-lg" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Contact & Admission */}
-                <div>
-                  <Skeleton height={24} width={220} className="mb-4" />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[...Array(2)].map((_, i) => (
-                      <div key={i}>
-                        <Skeleton height={16} width={120} className="mb-2" />
-                        <Skeleton height={48} className="rounded-lg" />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4">
-                    <Skeleton height={16} width={80} className="mb-2" />
-                    <Skeleton height={48} className="rounded-lg" />
-                  </div>
-                </div>
-
+                ))}
+                
                 {/* Submit Buttons */}
                 <div className="flex justify-end gap-3 pt-6">
-                  <Skeleton height={48} width={100} className="rounded-lg" />
-                  <Skeleton height={48} width={120} className="rounded-lg" />
+                  <Skeleton height={48} width={100} className="rounded-xl" />
+                  <Skeleton height={48} width={120} className="rounded-xl" />
                 </div>
               </div>
             </div>
@@ -296,7 +269,6 @@ const EditPatient = () => {
   const loadPhysicians = async () => {
     try {
       const response = await api.get('/patient-physicians');
-      // console.log('PHYSICIANS DATA:', response.data.data); 
       setPhysicians(response.data.data || []);
     } catch (error) {
       console.error('Error loading physicians:', error);
@@ -334,7 +306,6 @@ const EditPatient = () => {
   };
 
   const handlePhysicianSelect = (physician) => {
-    // console.log('SELECTED PHYSICIAN:', physician); 
     setFormData({
       ...formData,
       physician_first_name: physician.first_name,
@@ -342,7 +313,7 @@ const EditPatient = () => {
       physician_middle_name: physician.middle_name || '',
       physician_suffix: physician.suffix || '',
       physician_gender: physician.gender,
-      physician_type: physician.physician || 'admitting' // This should now work
+      physician_type: physician.physician || 'admitting'
     });
   };
 
@@ -356,7 +327,7 @@ const EditPatient = () => {
         middle_name: newPhysician.middle_name.trim(),
         suffix: newPhysician.suffix.trim(),
         gender: newPhysician.gender,
-        physician_type: newPhysician.physician_type // This will be stored in 'physician' column
+        physician_type: newPhysician.physician_type
       });
       
       const newPhysicianData = {
@@ -366,7 +337,7 @@ const EditPatient = () => {
         middle_name: newPhysician.middle_name.trim(),
         suffix: newPhysician.suffix.trim(),
         gender: newPhysician.gender,
-        physician: newPhysician.physician_type // Map to the database column name
+        physician: newPhysician.physician_type
       };
       
       // Add to dropdown list
@@ -416,20 +387,20 @@ const EditPatient = () => {
       new Date(qrData.portal.expires_at) < new Date() : false;
 
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6 h-fit sticky top-6">
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm h-fit sticky top-6">
         <div className="text-center">
           {/* Header */}
           <div className="flex items-center justify-center mb-4">
-            <div className="p-2 sm:p-3 bg-blue-100 rounded-full">
-              <QrCodeIcon className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+              <QrCodeIcon className="w-6 h-6 text-blue-600" />
             </div>
           </div>
           
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Patient QR Code</h2>
-          <p className="text-gray-600 text-xs sm:text-sm mb-4 sm:mb-6">Access portal and patient information</p>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Patient QR Code</h2>
+          <p className="text-gray-600 text-sm mb-6">Access portal and patient information</p>
 
           {qrData ? (
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-6">
               {/* QR Code Display */}
               <div className="relative">
                 {qrData.qr_image_url ? (
@@ -437,59 +408,58 @@ const EditPatient = () => {
                     <img 
                       src={getApiAssetUrl(qrData.qr_image_url)}
                       alt="Patient QR Code" 
-                      className="w-32 h-32 sm:w-48 sm:h-48 mx-auto border-2 border-gray-200 rounded-lg shadow-sm"
+                      className="w-48 h-48 mx-auto border border-gray-200 rounded-xl shadow-sm"
                       onError={(e) => {
                         e.target.style.display = 'none';
                         e.target.nextSibling.style.display = 'flex';
                       }}
                     />
                     <div 
-                      className="w-32 h-32 sm:w-48 sm:h-48 bg-gray-100 flex items-center justify-center mx-auto rounded-lg border-2 border-dashed border-gray-300"
+                      className="w-48 h-48 bg-gray-100 flex items-center justify-center mx-auto rounded-xl border-2 border-dashed border-gray-300"
                       style={{ display: 'none' }}
                     >
                       <div className="text-center">
-                        <QrCodeIcon className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
-                        <span className="text-gray-500 text-xs sm:text-sm">QR Code not available</span>
+                        <QrCodeIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                        <span className="text-gray-500 text-sm">QR Code not available</span>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="w-32 h-32 sm:w-48 sm:h-48 bg-gray-100 flex items-center justify-center mx-auto rounded-lg border-2 border-dashed border-gray-300">
+                  <div className="w-48 h-48 bg-gray-100 flex items-center justify-center mx-auto rounded-xl border-2 border-dashed border-gray-300">
                     <div className="text-center">
-                      <QrCodeIcon className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
-                      <span className="text-gray-500 text-xs sm:text-sm">QR Code not available</span>
+                      <QrCodeIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                      <span className="text-gray-500 text-sm">QR Code not available</span>
                     </div>
                   </div>
                 )}
               </div>
 
               {/* QR Info */}
-              <div className="space-y-2 sm:space-y-3 text-left bg-gray-50 rounded-lg p-3 sm:p-4">
+              <div className="space-y-3 text-left bg-gray-50 rounded-xl p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm font-medium text-gray-700">QR Code ID:</span>
-                  <span className="text-xs sm:text-sm text-gray-900 font-mono truncate max-w-24 sm:max-w-32">
+                  <span className="text-sm font-medium text-gray-700">QR Code ID:</span>
+                  <span className="text-sm text-gray-900 font-mono truncate max-w-32">
                     {qrData.qr?.qrcode || 'N/A'}
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm font-medium text-gray-700">Status:</span>
-                  <span className={`text-xs sm:text-sm px-2 py-1 rounded-full ${
+                  <span className="text-sm font-medium text-gray-700">Status:</span>
+                  <span className={`text-sm px-3 py-1 rounded-full font-medium ${
                     isExpired 
                       ? 'bg-red-100 text-red-800' 
-                      : 'bg-green-100 text-green-800'
+                      : 'bg-emerald-100 text-emerald-800'
                   }`}>
                     {isExpired ? 'Expired' : 'Active'}
                   </span>
                 </div>
 
-                
                 <div className="flex items-center justify-between">
-                  <span className="text-xs sm:text-sm font-medium text-gray-700 flex items-center">
-                    <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="text-sm font-medium text-gray-700 flex items-center">
+                    <CalendarIcon className="w-4 h-4 mr-1" />
                     Expires:
                   </span>
-                  <span className={`text-xs sm:text-sm ${isExpired ? 'text-red-600' : 'text-gray-900'}`}>
+                  <span className={`text-sm font-medium ${isExpired ? 'text-red-600' : 'text-gray-900'}`}>
                     {qrData.portal?.expires_at 
                       ? new Date(qrData.portal.expires_at).toLocaleDateString('en-US', {
                           year: 'numeric',
@@ -503,47 +473,45 @@ const EditPatient = () => {
               </div>
 
               {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              {qrData.portal_url && (
-                <a
-                  href={getPortalUrl(qrData.portal_url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-black px-3 py-2 sm:px-4 sm:py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium text-xs sm:text-sm"
+              <div className="space-y-3">
+                {qrData.portal_url && (
+                  <a
+                    href={getPortalUrl(qrData.portal_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md"
+                  >
+                    <LinkIcon className="w-5 h-5" />
+                    Open Portal Link
+                  </a>
+                )}
+                
+                <button
+                  onClick={regenerateQR}
+                  disabled={regeneratingQR}
+                  className="w-full flex items-center justify-center gap-2 bg-gray-600 text-white px-4 py-3 rounded-xl hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md"
                 >
-                  <LinkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="hidden sm:inline">Open Portal</span>
-                  <span className="sm:hidden">Portal</span>
-                </a>
-              )}
-              
-              <button
-                onClick={regenerateQR}
-                disabled={regeneratingQR}
-                className="flex-1 flex items-center justify-center gap-2 bg-blue-400 text-white px-3 py-2 sm:px-4 sm:py-3 rounded-lg hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-xs sm:text-sm"
-              >
-                <ArrowPathIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${regeneratingQR ? 'animate-spin' : ''}`} />
-                <span className="hidden sm:inline">{regeneratingQR ? 'Regenerating...' : 'Regenerate QR'}</span>
-                <span className="sm:hidden">{regeneratingQR ? 'Regen...' : 'Regen'}</span>
-              </button>
-            </div>
+                  <ArrowPathIcon className={`w-5 h-5 ${regeneratingQR ? 'animate-spin' : ''}`} />
+                  {regeneratingQR ? 'Regenerating...' : 'Regenerate QR'}
+                </button>
+              </div>
             </div>
           ) : (
-            <div className="space-y-4 sm:space-y-6">
+            <div className="space-y-6">
               {/* No QR Code State */}
-              <div className="w-32 h-32 sm:w-48 sm:h-48 bg-gray-100 flex items-center justify-center mx-auto rounded-lg border-2 border-dashed border-gray-300">
+              <div className="w-48 h-48 bg-gray-100 flex items-center justify-center mx-auto rounded-xl border-2 border-dashed border-gray-300">
                 <div className="text-center">
-                  <ExclamationTriangleIcon className="w-8 h-8 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-2" />
-                  <span className="text-gray-500 text-xs sm:text-sm">No QR Code Found</span>
+                  <ExclamationTriangleIcon className="w-12 h-12 text-gray-400 mx-auto mb-2" />
+                  <span className="text-gray-500 text-sm">No QR Code Found</span>
                 </div>
               </div>
               
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
                 <div className="flex items-center mb-2">
-                  <ExclamationTriangleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 mr-2" />
-                  <span className="text-xs sm:text-sm font-medium text-yellow-800">QR Code Missing</span>
+                  <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 mr-2" />
+                  <span className="text-sm font-medium text-amber-800">QR Code Missing</span>
                 </div>
-                <p className="text-xs sm:text-sm text-yellow-700">
+                <p className="text-sm text-amber-700">
                   This patient doesn't have a QR code yet. Generate one to enable portal access.
                 </p>
               </div>
@@ -551,9 +519,9 @@ const EditPatient = () => {
               <button
                 onClick={regenerateQR}
                 disabled={regeneratingQR}
-                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-3 py-2 sm:px-4 sm:py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm"
+                className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium text-sm shadow-sm hover:shadow-md"
               >
-                <QrCodeIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <QrCodeIcon className="w-5 h-5" />
                 {regeneratingQR ? 'Generating...' : 'Generate QR Code'}
               </button>
             </div>
@@ -566,369 +534,385 @@ const EditPatient = () => {
   if (loading) {
     return (
       <AdmittingNavSide>
-        <EditPatientSkeleton />
+        <div className="min-h-screen bg-gray-50">
+          <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+            <EditPatientSkeleton />
+          </div>
+        </div>
       </AdmittingNavSide>
     );
   }
 
   return (
     <AdmittingNavSide>
-      <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Edit Patient</h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">Update patient information and manage QR code access</p>
-          </div>
-          <div className="flex gap-3 mt-4 sm:mt-0">
-            <button
-              onClick={() => navigate(`/admitting/patients/${id}`)}
-              className="inline-flex items-center px-3 py-2 sm:px-4 sm:py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors"
-            >
-              View Patient
-            </button>
-          </div>
-        </div>
-        
-        {/* Success/Error Message */}
-        {message && (
-          <div className={`p-3 sm:p-4 rounded-lg border ${
-            message.includes('successfully') 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
-            <div className="flex items-center">
-              {message.includes('successfully') ? (
-                <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              ) : (
-                <ExclamationTriangleIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-              )}
-              <span className="text-sm sm:text-base">{message}</span>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                  <PencilIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">Edit Patient</h1>
+                  <p className="text-gray-600 mt-1">Update patient information and manage QR code access</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => navigate(`/admitting/patients/${id}`)}
+                  className="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-xl hover:bg-gray-700 transition-all duration-200 shadow-sm hover:shadow-md"
+                >
+                  View Patient
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-
-        {/* Main Content Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
-          {/* QR Code Section - Left Side */}
-          <div className="lg:col-span-1 order-2 lg:order-1">
-            <QRCodeSection />
-          </div>
-          
-          {/* Form Section - Right Side */}
-          <div className="lg:col-span-3 order-1 lg:order-2">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 sm:p-6">
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                {/* Patient Information */}
-                <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 pb-2 border-b border-gray-200">
-                    Patient Information
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
-                      <input
-                        type="text"
-                        name="first_name"
-                        value={formData.first_name}
-                        onChange={handleChange}
-                        required
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      />
+            
+            {/* Success/Error Message */}
+            {message && (
+              <div className={`p-4 rounded-2xl border transition-all duration-200 ${
+                message.includes('successfully') 
+                  ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
+                  : 'bg-red-50 border-red-200 text-red-800'
+              }`}>
+                <div className="flex items-center">
+                  {message.includes('successfully') ? (
+                    <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center mr-3 flex-shrink-0">
+                      ✓
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
-                      <input
-                        type="text"
-                        name="last_name"
-                        value={formData.last_name}
-                        onChange={handleChange}
-                        required
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center mr-3 flex-shrink-0">
+                      !
                     </div>
-                    <div className="sm:col-span-2 lg:col-span-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name</label>
-                      <input
-                        type="text"
-                        name="middle_name"
-                        value={formData.middle_name}
-                        onChange={handleChange}
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-3 sm:mt-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Suffix</label>
-                      <input
-                        type="text"
-                        name="suffix"
-                        value={formData.suffix}
-                        onChange={handleChange}
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Civil Status *</label>
-                      <select
-                        name="civil_status"
-                        value={formData.civil_status}
-                        onChange={handleChange}
-                        required
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      >
-                        <option value="single">Single</option>
-                        <option value="married">Married</option>
-                        <option value="widowed">Widowed</option>
-                        <option value="divorced">Divorced</option>
-                        <option value="separated">Separated</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
-                      <select
-                        name="gender"
-                        value={formData.gender}
-                        onChange={handleChange}
-                        required
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      >
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
-                        <option value="others">Others</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
-                      <input
-                        type="date"
-                        name="dob"
-                        value={formData.dob}
-                        onChange={handleChange}
-                        required
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      />
-                    </div>
-                  </div>
+                  )}
+                  <span className="font-medium">{message}</span>
                 </div>
+              </div>
+            )}
 
-                {/* Contact & Admission */}
-                <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 pb-2 border-b border-gray-200">
-                    Contact & Admission Details
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {/* Main Content Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              {/* QR Code Section - Left Side */}
+              <div className="lg:col-span-1 order-2 lg:order-1">
+                <QRCodeSection />
+              </div>
+              
+              {/* Form Section - Right Side */}
+              <div className="lg:col-span-3 order-1 lg:order-2">
+                <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Patient Information */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label>
-                      <input
-                        type="text"
-                        name="contact_number"
-                        value={formData.contact_number}
-                        onChange={handleChange}
-                        required
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Admitted Date *</label>
-                      <input
-                        type="date"
-                        name="admitted_date"
-                        value={formData.admitted_date}
-                        onChange={handleChange}
-                        required
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Enhanced Address Field */}
-                  <div className="mt-3 sm:mt-4 relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        name="address"
-                        value={addressSearch}
-                        onChange={handleAddressChange}
-                        onFocus={() => setShowAddressDropdown(true)}
-                        onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
-                        placeholder="Type or search for an address..."
-                        required
-                        className="w-full border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                      />
-                      <ChevronDownIcon 
-                        className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 transition-transform ${
-                          showAddressDropdown ? 'rotate-180' : ''
-                        }`}
-                      />
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+                        Patient Information
+                      </h3>
                       
-                      {/* Address Dropdown */}
-                      {showAddressDropdown && filteredAddresses.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                          {filteredAddresses.map((addr, index) => (
-                            <button
-                              key={index}
-                              type="button"
-                              onClick={() => handleAddressSelect(addr)}
-                              className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-b-0"
-                            >
-                              {addr}
-                            </button>
-                          ))}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
+                          <input
+                            type="text"
+                            name="first_name"
+                            value={formData.first_name}
+                            onChange={handleChange}
+                            required
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Enter first name"
+                          />
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Last Name *</label>
+                          <input
+                            type="text"
+                            name="last_name"
+                            value={formData.last_name}
+                            onChange={handleChange}
+                            required
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Enter last name"
+                          />
+                        </div>
+                        <div className="sm:col-span-2 lg:col-span-1">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name</label>
+                          <input
+                            type="text"
+                            name="middle_name"
+                            value={formData.middle_name}
+                            onChange={handleChange}
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Enter middle name"
+                          />
+                        </div>
+                      </div>
 
-                {/* Room Information */}
-                <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 pb-2 border-b border-gray-200">
-                    Room Information
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Room *</label>
-                      <div className="flex gap-2">
-                        <select
-                          value={formData.room_name}
-                          onChange={(e) => {
-                            const selectedRoom = rooms.find(room => room.name === e.target.value);
-                            if (selectedRoom) {
-                              setFormData({
-                                ...formData,
-                                room_name: selectedRoom.name,
-                                room_description: selectedRoom.description || ''
-                              });
-                            } else {
-                              setFormData({
-                                ...formData,
-                                room_name: '',
-                                room_description: ''
-                              });
-                            }
-                          }}
-                          className="flex-1 border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                          required
-                        >
-                          <option value="">Select room</option>
-                          {rooms.map((room) => (
-                            <option key={room.id} value={room.name}>
-                              {room.name} - {room.description}
-                            </option>
-                          ))}
-                        </select>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Suffix</label>
+                          <input
+                            type="text"
+                            name="suffix"
+                            value={formData.suffix}
+                            onChange={handleChange}
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Jr., Sr., etc."
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Civil Status *</label>
+                          <select
+                            name="civil_status"
+                            value={formData.civil_status}
+                            onChange={handleChange}
+                            required
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          >
+                            <option value="single">Single</option>
+                            <option value="married">Married</option>
+                            <option value="widowed">Widowed</option>
+                            <option value="divorced">Divorced</option>
+                            <option value="separated">Separated</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
+                          <select
+                            name="gender"
+                            value={formData.gender}
+                            onChange={handleChange}
+                            required
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          >
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="others">Others</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth *</label>
+                          <input
+                            type="date"
+                            name="dob"
+                            value={formData.dob}
+                            onChange={handleChange}
+                            required
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          />
+                        </div>
                       </div>
                     </div>
-                    <br />
-                    <div>
-                      <input
-                        type="text"
-                        name="room_description"
-                        value={formData.room_description}
-                        onChange={handleChange}
-                        placeholder="Room description"
-                        className="w-full  border-gray-300 rounded-lg italic p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-500 text-sm sm:text-base"
-                        readOnly
-                      />
-                      <hr />
-                    </div>
-                  </div>
-                </div>
 
-                {/* Physician Information */}
-                <div>
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 pb-2 border-b border-gray-200">
-                    Physician Information
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                    {/* Contact & Admission */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Physician *</label>
-                      <div className="flex gap-2">
-                        <select
-                          value={formData.physician_first_name && formData.physician_last_name ? 
-                            `${formData.physician_first_name} ${formData.physician_last_name}` : ''
-                          }
-                          onChange={(e) => {
-                            const selectedPhysician = physicians.find(physician => 
-                              `${physician.first_name} ${physician.last_name}` === e.target.value
-                            );
-                            if (selectedPhysician) {
-                              handlePhysicianSelect(selectedPhysician);
-                            } else {
-                              setFormData({
-                                ...formData,
-                                physician_first_name: '',
-                                physician_last_name: '',
-                                physician_middle_name: '',
-                                physician_suffix: '',
-                                physician_gender: 'male',
-                                physician_type: 'admitting'
-                              });
-                            }
-                          }}
-                          className="flex-1 border border-gray-300 rounded-lg shadow-sm p-2 sm:p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm sm:text-base"
-                          required
-                        >
-                          <option value="">Select physician</option>
-                          {physicians.map((physician) => (
-                            <option key={physician.id} value={`${physician.first_name} ${physician.last_name}`}>
-                              Dr. {physician.first_name} {physician.middle_name ? `${physician.middle_name} ` : ''}{physician.last_name}{physician.suffix ? ` ${physician.suffix}` : ''} - {physician.physician ? physician.physician.charAt(0).toUpperCase() + physician.physician.slice(1) : 'No Role Set'}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="button"
-                          onClick={() => setShowPhysicianModal(true)}
-                          className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          <PlusIcon className="w-4 h-4" />
-                        </button>
-                      </div>
-                      {formData.physician_first_name && formData.physician_last_name && (
-                        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <p className="text-sm text-blue-800">
-                            <span className="font-semibold">Selected Physician:</span> 
-                            <br />
-                            <span className="font-medium">
-                              Dr. {formData.physician_first_name} {formData.physician_middle_name ? `${formData.physician_middle_name} ` : ''}{formData.physician_last_name}{formData.physician_suffix ? ` ${formData.physician_suffix}` : ''}
-                            </span>
-                            <br />
-                            <span className="text-xs">
-                              Role: <span className="font-medium">{formData.physician_type ? formData.physician_type.charAt(0).toUpperCase() + formData.physician_type.slice(1) : 'Admitting'} Physician</span>
-                            </span>
-                          </p>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+                        Contact & Admission Details
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Contact Number *</label>
+                          <input
+                            type="text"
+                            name="contact_number"
+                            value={formData.contact_number}
+                            onChange={handleChange}
+                            required
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            placeholder="Enter contact number"
+                          />
                         </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Admitted Date *</label>
+                          <input
+                            type="date"
+                            name="admitted_date"
+                            value={formData.admitted_date}
+                            onChange={handleChange}
+                            required
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          />
+                        </div>
+                      </div>
 
-                {/* Submit Buttons */}
-                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 sm:pt-6 border-t border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => navigate('/admitting/patient-list')}
-                    className="px-4 py-2 sm:px-6 sm:py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm sm:text-base"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="px-4 py-2 sm:px-6 sm:py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium text-sm sm:text-base"
-                  >
-                    {submitting ? 'Updating...' : 'Update Patient'}
-                  </button>
+                      {/* Enhanced Address Field */}
+                      <div className="mt-4 relative">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Address *</label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            name="address"
+                            value={addressSearch}
+                            onChange={handleAddressChange}
+                            onFocus={() => setShowAddressDropdown(true)}
+                            onBlur={() => setTimeout(() => setShowAddressDropdown(false), 200)}
+                            placeholder="Type or search for an address..."
+                            required
+                            className="w-full border border-gray-200 rounded-xl p-3 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                          />
+                          <ChevronDownIcon 
+                            className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 transition-transform duration-200 ${
+                              showAddressDropdown ? 'rotate-180' : ''
+                            }`}
+                          />
+                          
+                          {/* Address Dropdown */}
+                          {showAddressDropdown && filteredAddresses.length > 0 && (
+                            <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                              {filteredAddresses.map((addr, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  onClick={() => handleAddressSelect(addr)}
+                                  className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm border-b border-gray-100 last:border-b-0 transition-colors duration-150"
+                                >
+                                  {addr}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Room Information */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+                        Room Information
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Room *</label>
+                          <select
+                            value={formData.room_name}
+                            onChange={(e) => {
+                              const selectedRoom = rooms.find(room => room.name === e.target.value);
+                              if (selectedRoom) {
+                                setFormData({
+                                  ...formData,
+                                  room_name: selectedRoom.name,
+                                  room_description: selectedRoom.description || ''
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  room_name: '',
+                                  room_description: ''
+                                });
+                              }
+                            }}
+                            className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            required
+                          >
+                            <option value="">Select room</option>
+                            {rooms.map((room) => (
+                              <option key={room.id} value={room.name}>
+                                {room.name} - {room.description}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Room Description</label>
+                          <input
+                            type="text"
+                            name="room_description"
+                            value={formData.room_description}
+                            placeholder="Room description"
+                            className="w-full border border-gray-200 rounded-xl p-3 bg-gray-50 text-gray-600 italic transition-all duration-200"
+                            readOnly
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Physician Information */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-100">
+                        Physician Information
+                      </h3>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Physician *</label>
+                        <div className="flex gap-2">
+                          <select
+                            value={formData.physician_first_name && formData.physician_last_name ? 
+                              `${formData.physician_first_name} ${formData.physician_last_name}` : ''
+                            }
+                            onChange={(e) => {
+                              const selectedPhysician = physicians.find(physician => 
+                                `${physician.first_name} ${physician.last_name}` === e.target.value
+                              );
+                              if (selectedPhysician) {
+                                handlePhysicianSelect(selectedPhysician);
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  physician_first_name: '',
+                                  physician_last_name: '',
+                                  physician_middle_name: '',
+                                  physician_suffix: '',
+                                  physician_gender: 'male',
+                                  physician_type: 'admitting'
+                                });
+                              }
+                            }}
+                            className="flex-1 border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                            required
+                          >
+                            <option value="">Select physician</option>
+                            {physicians.map((physician) => (
+                              <option key={physician.id} value={`${physician.first_name} ${physician.last_name}`}>
+                                Dr. {physician.first_name} {physician.middle_name ? `${physician.middle_name} ` : ''}{physician.last_name}{physician.suffix ? ` ${physician.suffix}` : ''} - {physician.physician ? physician.physician.charAt(0).toUpperCase() + physician.physician.slice(1) : 'No Role Set'}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="button"
+                            onClick={() => setShowPhysicianModal(true)}
+                            className="px-3 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-all duration-200 border border-gray-200"
+                          >
+                            <PlusIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+                        {formData.physician_first_name && formData.physician_last_name && (
+                          <div className="mt-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                            <p className="text-sm text-blue-800">
+                              <span className="font-semibold">Selected Physician:</span> 
+                              <br />
+                              <span className="font-medium">
+                                Dr. {formData.physician_first_name} {formData.physician_middle_name ? `${formData.physician_middle_name} ` : ''}{formData.physician_last_name}{formData.physician_suffix ? ` ${formData.physician_suffix}` : ''}
+                              </span>
+                              <br />
+                              <span className="text-xs">
+                                Role: <span className="font-medium">{formData.physician_type ? formData.physician_type.charAt(0).toUpperCase() + formData.physician_type.slice(1) : 'Admitting'} Physician</span>
+                              </span>
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Submit Buttons */}
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6 border-t border-gray-100">
+                      <button
+                        type="button"
+                        onClick={() => navigate('/admitting/patient-list')}
+                        className="px-6 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={submitting}
+                        className="px-6 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-sm hover:shadow-md"
+                      >
+                        {submitting ? 'Updating...' : 'Update Patient'}
+                      </button>
+                    </div>
+                  </form>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>
@@ -936,25 +920,28 @@ const EditPatient = () => {
 
       {/* Physician Modal */}
       {showPhysicianModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
-            <div className="p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Add New Physician</h3>
-                <button onClick={() => setShowPhysicianModal(false)}>
-                  <XMarkIcon className="w-6 h-6 text-gray-400 hover:text-gray-600" />
+                <button 
+                  onClick={() => setShowPhysicianModal(false)}
+                  className="p-1 rounded-lg hover:bg-gray-100 transition-colors duration-150"
+                >
+                  <XMarkIcon className="w-6 h-6 text-gray-400" />
                 </button>
               </div>
             </div>
             <div className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
                   <input
                     type="text"
                     value={newPhysician.first_name}
                     onChange={(e) => setNewPhysician({ ...newPhysician, first_name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     placeholder="Enter first name"
                   />
                 </div>
@@ -964,19 +951,19 @@ const EditPatient = () => {
                     type="text"
                     value={newPhysician.last_name}
                     onChange={(e) => setNewPhysician({ ...newPhysician, last_name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     placeholder="Enter last name"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Middle Name</label>
                   <input
                     type="text"
                     value={newPhysician.middle_name}
                     onChange={(e) => setNewPhysician({ ...newPhysician, middle_name: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     placeholder="Enter middle name"
                   />
                 </div>
@@ -986,18 +973,18 @@ const EditPatient = () => {
                     type="text"
                     value={newPhysician.suffix}
                     onChange={(e) => setNewPhysician({ ...newPhysician, suffix: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                     placeholder="Jr., Sr., III, etc."
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Gender *</label>
                   <select
                     value={newPhysician.gender}
                     onChange={(e) => setNewPhysician({ ...newPhysician, gender: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   >
                     <option value="male">Male</option>
                     <option value="female">Female</option>
@@ -1009,19 +996,19 @@ const EditPatient = () => {
                   <select
                     value={newPhysician.physician_type}
                     onChange={(e) => setNewPhysician({ ...newPhysician, physician_type: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   >
                     <option value="admitting">Admitting</option>
                     <option value="attending">Attending</option>
                   </select>
                 </div>
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex items-start space-x-2">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="flex items-start space-x-3">
                   <div className="flex-shrink-0">
-                    <svg className="w-4 h-4 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                    </svg>
+                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">i</span>
+                    </div>
                   </div>
                   <div className="text-xs text-blue-700">
                     <p className="font-semibold mb-1">Physician Roles:</p>
@@ -1031,7 +1018,7 @@ const EditPatient = () => {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+            <div className="px-6 py-4 bg-gray-50 rounded-b-2xl flex flex-col sm:flex-row justify-end gap-3">
               <button
                 onClick={() => {
                   setShowPhysicianModal(false);
@@ -1044,14 +1031,14 @@ const EditPatient = () => {
                     physician_type: 'admitting'
                   });
                 }}
-                className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-4 py-2 text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors duration-150"
               >
                 Cancel
               </button>
               <button
                 onClick={handleAddPhysician}
                 disabled={!newPhysician.first_name.trim() || !newPhysician.last_name.trim()}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-6 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
               >
                 Add Physician
               </button>

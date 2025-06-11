@@ -121,8 +121,6 @@ const UserDetail = () => {
           
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{user.name}</h1>
-              <p className="text-gray-600">User Details & Information</p>
             </div>
             <div className="flex items-center space-x-3">
               <Link

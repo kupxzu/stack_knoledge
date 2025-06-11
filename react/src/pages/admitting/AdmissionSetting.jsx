@@ -9,13 +9,13 @@ import {
   UserIcon,
   MagnifyingGlassIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  CogIcon
 } from '@heroicons/react/24/outline';
 import AdmittingNavSide from '@/components/AdmittingNavSide';
 import api from '@/services/api';
 import Skeleton, { SkeletonTheme } from 'react-loading-skeleton'
 import 'react-loading-skeleton/dist/skeleton.css'
-
 
 const AdmissionSetting = () => {
   const [activeTab, setActiveTab] = useState('addresses');
@@ -137,7 +137,6 @@ const AdmissionSetting = () => {
     try {
       const endpoint = getEndpoint();
       
-      
       if (editingItem) {
         const response = await api.put(`${endpoint}/${editingItem.id}`, formData);
         setMessage('Item updated successfully');
@@ -149,8 +148,6 @@ const AdmissionSetting = () => {
       setShowModal(false);
       loadData();
     } catch (error) {
-
-      
       if (error.response?.data?.errors) {
         const errors = Object.values(error.response.data.errors).flat();
         setMessage(`Validation error: ${errors.join(', ')}`);
@@ -214,7 +211,7 @@ const AdmissionSetting = () => {
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
               required
               rows={3}
-              className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 resize-none"
               placeholder="Enter complete address"
             />
           </div>
@@ -230,7 +227,7 @@ const AdmissionSetting = () => {
                 value={formData.room_name || ''}
                 onChange={(e) => setFormData({ ...formData, room_name: e.target.value })}
                 required
-                className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="e.g., Room 101, ICU-A"
               />
             </div>
@@ -240,7 +237,7 @@ const AdmissionSetting = () => {
                 type="text"
                 value={formData.description || ''}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 placeholder="Room description or type"
               />
             </div>
@@ -258,7 +255,7 @@ const AdmissionSetting = () => {
                   value={formData.first_name || ''}
                   onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
                   required
-                  className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   placeholder="First name"
                 />
               </div>
@@ -269,7 +266,7 @@ const AdmissionSetting = () => {
                   value={formData.last_name || ''}
                   onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
                   required
-                  className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   placeholder="Last name"
                 />
               </div>
@@ -281,7 +278,7 @@ const AdmissionSetting = () => {
                   type="text"
                   value={formData.middle_name || ''}
                   onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   placeholder="Middle name"
                 />
               </div>
@@ -291,7 +288,7 @@ const AdmissionSetting = () => {
                   type="text"
                   value={formData.suffix || ''}
                   onChange={(e) => setFormData({ ...formData, suffix: e.target.value })}
-                  className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                   placeholder="Jr., Sr., III"
                 />
               </div>
@@ -303,7 +300,7 @@ const AdmissionSetting = () => {
                   value={formData.gender || 'male'}
                   onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                   required
-                  className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 >
                   <option value="male">Male</option>
                   <option value="female">Female</option>
@@ -316,19 +313,19 @@ const AdmissionSetting = () => {
                   value={formData.physician || 'admitting'}
                   onChange={(e) => setFormData({ ...formData, physician: e.target.value })}
                   required
-                  className="w-full border border-gray-300 rounded-lg shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 >
                   <option value="admitting">Admitting</option>
                   <option value="attending">Attending</option>
                 </select>
               </div>
             </div>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <div className="flex items-start space-x-2">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0">
-                  <svg className="w-4 h-4 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
+                  <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">i</span>
+                  </div>
                 </div>
                 <div className="text-xs text-blue-700">
                   <p className="font-semibold mb-1">Physician Roles:</p>
@@ -349,23 +346,23 @@ const AdmissionSetting = () => {
     switch (activeTab) {
       case 'addresses':
         return (
-          <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-4 mb-3">
+          <div key={item.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <p className="text-sm text-gray-900">{item.address}</p>
+                <p className="text-sm text-gray-900 leading-relaxed">{item.address}</p>
               </div>
-              <div className="flex space-x-2 ml-3">
+              <div className="flex space-x-2 ml-4">
                 <button
                   onClick={() => handleEdit(item)}
-                  className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded"
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
                 >
-                  <PencilIcon className="w-4 h-4" />
+                  <PencilIcon className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => handleDelete(item.id)}
-                  className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                 >
-                  <TrashIcon className="w-4 h-4" />
+                  <TrashIcon className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -374,26 +371,24 @@ const AdmissionSetting = () => {
       
       case 'rooms':
         return (
-          <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-4 mb-3">
+          <div key={item.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-gray-900">{item.name}</h3>
-                </div>
+                <h3 className="font-semibold text-gray-900 text-lg mb-2">{item.name}</h3>
                 <p className="text-sm text-gray-600">{item.description || 'No description'}</p>
               </div>
-              <div className="flex space-x-2 ml-3">
+              <div className="flex space-x-2 ml-4">
                 <button
                   onClick={() => handleEdit(item)}
-                  className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded"
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
                 >
-                  <PencilIcon className="w-4 h-4" />
+                  <PencilIcon className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => handleDelete(item.id)}
-                  className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                 >
-                  <TrashIcon className="w-4 h-4" />
+                  <TrashIcon className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -402,20 +397,18 @@ const AdmissionSetting = () => {
       
       case 'physicians':
         return (
-          <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-4 mb-3">
+          <div key={item.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-gray-900">
-                    Dr. {item.first_name} {item.middle_name && item.middle_name + ' '}{item.last_name} {item.suffix}
-                  </h3>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-600 capitalize">{item.gender}</p>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                <h3 className="font-semibold text-gray-900 text-lg mb-3">
+                  Dr. {item.first_name} {item.middle_name && item.middle_name + ' '}{item.last_name} {item.suffix}
+                </h3>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600 capitalize">Gender: {item.gender}</p>
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                     item.physician === 'attending' 
                       ? 'bg-blue-100 text-blue-800' 
-                      : 'bg-green-100 text-green-800'
+                      : 'bg-emerald-100 text-emerald-800'
                   }`}>
                     {item.physician ? 
                       item.physician.charAt(0).toUpperCase() + item.physician.slice(1) + ' Physician'
@@ -424,18 +417,18 @@ const AdmissionSetting = () => {
                   </span>
                 </div>
               </div>
-              <div className="flex space-x-2 ml-3">
+              <div className="flex space-x-2 ml-4">
                 <button
                   onClick={() => handleEdit(item)}
-                  className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded"
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
                 >
-                  <PencilIcon className="w-4 h-4" />
+                  <PencilIcon className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => handleDelete(item.id)}
-                  className="p-1.5 text-red-600 hover:bg-red-50 rounded"
+                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                 >
-                  <TrashIcon className="w-4 h-4" />
+                  <TrashIcon className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -451,32 +444,32 @@ const AdmissionSetting = () => {
     switch (activeTab) {
       case 'addresses':
         return (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-100">
+            <thead className="bg-gray-50/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Address</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-100">
               {getCurrentData().map((address) => (
-                <tr key={address.id} className="hover:bg-gray-50">
+                <tr key={address.id} className="hover:bg-gray-50/50 transition-colors duration-150">
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    <div className="max-w-xs truncate">{address.address}</div>
+                    <div className="max-w-md">{address.address}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleEdit(address)}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
                       >
-                        <PencilIcon className="w-4 h-4" />
+                        <PencilIcon className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDelete(address.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                       >
-                        <TrashIcon className="w-4 h-4" />
+                        <TrashIcon className="w-5 h-5" />
                       </button>
                     </div>
                   </td>
@@ -488,34 +481,34 @@ const AdmissionSetting = () => {
       
       case 'rooms':
         return (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-100">
+            <thead className="bg-gray-50/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Room Name</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Description</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-100">
               {getCurrentData().map((room) => (
-                <tr key={room.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{room.name}</td>
+                <tr key={room.id} className="hover:bg-gray-50/50 transition-colors duration-150">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{room.name}</td>
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    <div className="max-w-xs truncate">{room.description || 'N/A'}</div>
+                    <div className="max-w-xs">{room.description || 'N/A'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleEdit(room)}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
                       >
-                        <PencilIcon className="w-4 h-4" />
+                        <PencilIcon className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDelete(room.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                       >
-                        <TrashIcon className="w-4 h-4" />
+                        <TrashIcon className="w-5 h-5" />
                       </button>
                     </div>
                   </td>
@@ -527,27 +520,27 @@ const AdmissionSetting = () => {
       
       case 'physicians':
         return (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-100">
+            <thead className="bg-gray-50/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Gender</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Role</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-100">
               {getCurrentData().map((physician) => (
-                <tr key={physician.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr key={physician.id} className="hover:bg-gray-50/50 transition-colors duration-150">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                     Dr. {physician.first_name} {physician.middle_name && physician.middle_name + ' '}{physician.last_name} {physician.suffix}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">{physician.gender}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
                       physician.physician === 'attending' 
                         ? 'bg-blue-100 text-blue-800' 
-                        : 'bg-green-100 text-green-800'
+                        : 'bg-emerald-100 text-emerald-800'
                     }`}>
                       {physician.physician ? 
                         physician.physician.charAt(0).toUpperCase() + physician.physician.slice(1)
@@ -559,15 +552,15 @@ const AdmissionSetting = () => {
                     <div className="flex space-x-2">
                       <button
                         onClick={() => handleEdit(physician)}
-                        className="text-indigo-600 hover:text-indigo-900"
+                        className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all duration-200"
                       >
-                        <PencilIcon className="w-4 h-4" />
+                        <PencilIcon className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleDelete(physician.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200"
                       >
-                        <TrashIcon className="w-4 h-4" />
+                        <TrashIcon className="w-5 h-5" />
                       </button>
                     </div>
                   </td>
@@ -610,21 +603,18 @@ const AdmissionSetting = () => {
     }
 
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 mt-6 pt-6 border-t border-gray-200">
-        {/* Results info */}
-        <div className="text-sm text-gray-700">
+      <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 mt-6 pt-6 border-t border-gray-100">
+        <div className="text-sm text-gray-600 font-medium">
           Showing {pagination.from} to {pagination.to} of {pagination.total} results
         </div>
 
-        {/* Pagination controls */}
         <div className="flex items-center space-x-4">
-          {/* Per page selector */}
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-700">Show:</span>
+            <span className="text-sm text-gray-600 font-medium">Show:</span>
             <select
               value={pagination.per_page}
               onChange={(e) => handlePerPageChange(e.target.value)}
-              className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             >
               <option value="5">5</option>
               <option value="10">10</option>
@@ -633,65 +623,59 @@ const AdmissionSetting = () => {
             </select>
           </div>
 
-          {/* Page navigation */}
-          <div className="flex items-center space-x-1">
-            {/* Previous button */}
+          <div className="flex items-center space-x-2">
             <button
               onClick={() => handlePageChange(pagination.current_page - 1)}
               disabled={pagination.current_page === 1}
-              className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              <ChevronLeftIcon className="w-4 h-4" />
+              <ChevronLeftIcon className="w-5 h-5" />
             </button>
 
-            {/* First page */}
             {startPage > 1 && (
               <>
                 <button
                   onClick={() => handlePageChange(1)}
-                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200"
                 >
                   1
                 </button>
-                {startPage > 2 && <span className="px-1">...</span>}
+                {startPage > 2 && <span className="px-1 text-gray-400">...</span>}
               </>
             )}
 
-            {/* Page numbers */}
             {pages.map(page => (
               <button
                 key={page}
                 onClick={() => handlePageChange(page)}
-                className={`px-3 py-1 border rounded ${
+                className={`px-4 py-2 rounded-xl transition-all duration-200 ${
                   page === pagination.current_page
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'border-gray-300 hover:bg-gray-50'
+                    ? 'bg-gray-900 text-white'
+                    : 'border border-gray-200 hover:bg-gray-50'
                 }`}
               >
                 {page}
               </button>
             ))}
 
-            {/* Last page */}
             {endPage < pagination.last_page && (
               <>
-                {endPage < pagination.last_page - 1 && <span className="px-1">...</span>}
+                {endPage < pagination.last_page - 1 && <span className="px-1 text-gray-400">...</span>}
                 <button
                   onClick={() => handlePageChange(pagination.last_page)}
-                  className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-200"
                 >
                   {pagination.last_page}
                 </button>
               </>
             )}
 
-            {/* Next button */}
             <button
               onClick={() => handlePageChange(pagination.current_page + 1)}
               disabled={pagination.current_page === pagination.last_page}
-              className="p-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
             >
-              <ChevronRightIcon className="w-4 h-4" />
+              <ChevronRightIcon className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -700,40 +684,34 @@ const AdmissionSetting = () => {
   };
 
   const TableSkeleton = () => (
-    <div className="overflow-x-auto border border-gray-200 rounded-lg">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+    <div className="overflow-x-auto border border-gray-100 rounded-2xl">
+      <table className="min-w-full divide-y divide-gray-100">
+        <thead className="bg-gray-50/50">
           <tr>
-            <th className="px-6 py-3 text-left">
-              <Skeleton height={16} width={30} />
-            </th>
-            <th className="px-6 py-3 text-left">
-              <Skeleton height={16} width={100} />
-            </th>
-            <th className="px-6 py-3 text-left">
+            <th className="px-6 py-4 text-left">
               <Skeleton height={16} width={80} />
             </th>
-            <th className="px-6 py-3 text-left">
+            <th className="px-6 py-4 text-left">
+              <Skeleton height={16} width={100} />
+            </th>
+            <th className="px-6 py-4 text-left">
               <Skeleton height={16} width={60} />
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-white divide-y divide-gray-100">
           {[...Array(5)].map((_, index) => (
-            <tr key={index} className="hover:bg-gray-50">
-              <td className="px-6 py-4">
-                <Skeleton height={16} width={40} />
-              </td>
+            <tr key={index}>
               <td className="px-6 py-4">
                 <Skeleton height={16} width={120} />
               </td>
               <td className="px-6 py-4">
-                <Skeleton height={16} width={100} />
+                <Skeleton height={16} width={180} />
               </td>
               <td className="px-6 py-4">
                 <div className="flex space-x-2">
-                  <Skeleton height={16} width={16} />
-                  <Skeleton height={16} width={16} />
+                  <Skeleton height={32} width={32} className="rounded-xl" />
+                  <Skeleton height={32} width={32} className="rounded-xl" />
                 </div>
               </td>
             </tr>
@@ -744,20 +722,17 @@ const AdmissionSetting = () => {
   );
 
   const MobileCardSkeleton = () => (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {[...Array(5)].map((_, index) => (
-        <div key={index} className="bg-white border border-gray-200 rounded-lg p-4">
+        <div key={index} className="bg-white border border-gray-100 rounded-2xl p-6">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <Skeleton height={20} width={150} />
-                <Skeleton height={16} width={40} />
-              </div>
-              <Skeleton height={16} width={200} />
+              <Skeleton height={20} width={200} className="mb-2" />
+              <Skeleton height={16} width={150} />
             </div>
-            <div className="flex space-x-2 ml-3">
-              <Skeleton height={24} width={24} />
-              <Skeleton height={24} width={24} />
+            <div className="flex space-x-2 ml-4">
+              <Skeleton height={32} width={32} className="rounded-xl" />
+              <Skeleton height={32} width={32} className="rounded-xl" />
             </div>
           </div>
         </div>
@@ -765,304 +740,208 @@ const AdmissionSetting = () => {
     </div>
   );
 
-  const HeaderSkeleton = () => (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-6">
-      <div className="flex-1 max-w-md">
-        <Skeleton height={40} />
-      </div>
-      <Skeleton height={40} width={120} />
-    </div>
-  );
-
-  const getTabSpecificSkeleton = () => {
-    switch (activeTab) {
-      case 'addresses':
-        return (
-          <div className="hidden lg:block">
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3"><Skeleton height={16} width={30} /></th>
-                    <th className="px-6 py-3"><Skeleton height={16} width={80} /></th>
-                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {[...Array(5)].map((_, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4"><Skeleton height={16} width={40} /></td>
-                      <td className="px-6 py-4"><Skeleton height={16} width={250} count={2} /></td>
-                      <td className="px-6 py-4">
-                        <div className="flex space-x-2">
-                          <Skeleton height={16} width={16} />
-                          <Skeleton height={16} width={16} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      
-      case 'rooms':
-        return (
-          <div className="hidden lg:block">
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3"><Skeleton height={16} width={30} /></th>
-                    <th className="px-6 py-3"><Skeleton height={16} width={100} /></th>
-                    <th className="px-6 py-3"><Skeleton height={16} width={100} /></th>
-                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {[...Array(5)].map((_, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4"><Skeleton height={16} width={40} /></td>
-                      <td className="px-6 py-4"><Skeleton height={16} width={120} /></td>
-                      <td className="px-6 py-4"><Skeleton height={16} width={180} /></td>
-                      <td className="px-6 py-4">
-                        <div className="flex space-x-2">
-                          <Skeleton height={16} width={16} />
-                          <Skeleton height={16} width={16} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-
-      case 'physicians':
-        return (
-          <div className="hidden lg:block">
-            <div className="overflow-x-auto border border-gray-200 rounded-lg">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3"><Skeleton height={16} width={30} /></th>
-                    <th className="px-6 py-3"><Skeleton height={16} width={80} /></th>
-                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
-                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
-                    <th className="px-6 py-3"><Skeleton height={16} width={60} /></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {[...Array(5)].map((_, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4"><Skeleton height={16} width={40} /></td>
-                      <td className="px-6 py-4"><Skeleton height={16} width={200} /></td>
-                      <td className="px-6 py-4"><Skeleton height={16} width={60} /></td>
-                      <td className="px-6 py-4"><Skeleton height={16} width={80} /></td>
-                      <td className="px-6 py-4">
-                        <div className="flex space-x-2">
-                          <Skeleton height={16} width={16} />
-                          <Skeleton height={16} width={16} />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-
-      default:
-        return <TableSkeleton />;
-    }
-  };
-
   const currentData = getCurrentData();
 
   return (
     <AdmittingNavSide>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Admission Settings</h1>
-          <p className="text-gray-600 mt-1">Manage addresses, rooms, and physicians for patient admissions</p>
-        </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+          <div className="space-y-6">
 
-        {/* Message */}
-        {message && (
-          <div className={`p-4 rounded-lg ${
-            message.includes('successfully') 
-              ? 'bg-green-50 text-green-700 border border-green-200' 
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}>
-            {message}
-          </div>
-        )}
-
-        {/* Tabs */}
-        <div className="bg-white rounded-lg border border-gray-200">
-          {/* Mobile Tab Selector */}
-          <div className="block sm:hidden border-b border-gray-200 p-4">
-            <select
-              value={activeTab}
-              onChange={(e) => {
-                setActiveTab(e.target.value);
-                setMessage('');
-                setSearchTerm('');
-              }}
-              className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              {tabs.map((tab) => (
-                <option key={tab.id} value={tab.id}>
-                  {tab.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Desktop Tabs */}
-          <div className="hidden sm:block border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => {
-                      setActiveTab(tab.id);
-                      setMessage('');
-                      setSearchTerm('');
-                    }}
-                    className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 ${
-                      activeTab === tab.id
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">
-            {/* Header with Search and Add Button */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-6">
-              <div className="flex-1 max-w-md">
-                <div className="relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder={`Search ${getTabTitle().toLowerCase()}...`}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
+            {/* Message */}
+            {message && (
+              <div className={`p-4 rounded-2xl border transition-all duration-200 ${
+                message.includes('successfully') 
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+                  : 'bg-red-50 text-red-800 border-red-200'
+              }`}>
+                <div className="flex items-center">
+                  {message.includes('successfully') ? (
+                    <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center mr-3 flex-shrink-0">
+                      ✓
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center mr-3 flex-shrink-0">
+                      !
+                    </div>
+                  )}
+                  <span className="font-medium">{message}</span>
                 </div>
               </div>
-              
-              <button
-                onClick={handleCreate}
-                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <PlusIcon className="w-4 h-4 mr-2" />
-                Add {getTabTitle().slice(0, -1)}
-              </button>
-            </div>
-
-            {/* Enhanced Loading State */}
-            {loading ? (
-              <SkeletonTheme baseColor="#f3f4f6" highlightColor="#e5e7eb">
-                <div>
-                  {/* Header Skeleton */}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-6">
-                    <div className="flex-1 max-w-md">
-                      <Skeleton height={40} className="rounded-lg" />
-                    </div>
-                    <Skeleton height={40} width={140} className="rounded-lg" />
-                  </div>
-
-                  {/* Mobile Cards Skeleton */}
-                  <div className="block lg:hidden">
-                    <MobileCardSkeleton />
-                  </div>
-
-                  {/* Desktop Table Skeleton */}
-                  {getTabSpecificSkeleton()}
-                  
-                  {/* Pagination Skeleton */}
-                  <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 mt-6 pt-6 border-t border-gray-200">
-                    <Skeleton height={20} width={200} />
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-2">
-                        <Skeleton height={32} width={50} />
-                        <Skeleton height={32} width={60} />
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Skeleton key={i} height={32} width={32} className="rounded" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </SkeletonTheme>
-            ) : (
-              <>
-                {/* Mobile Cards */}
-                <div className="block lg:hidden">
-                  {currentData.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <div className="text-lg mb-2">No {getTabTitle().toLowerCase()} found</div>
-                      <p className="text-sm">
-                        {searchTerm ? 'Try adjusting your search terms.' : `Click "Add ${getTabTitle().slice(0, -1)}" to create one.`}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        {currentData.map((item) => renderMobileCard(item))}
-                      </div>
-                      <PaginationComponent />
-                    </>
-                  )}
-                </div>
-
-                {/* Desktop Table */}
-                <div className="hidden lg:block">
-                  {currentData.length === 0 ? (
-                    <div className="text-center py-12 text-gray-500">
-                      <div className="text-lg mb-2">No {getTabTitle().toLowerCase()} found</div>
-                      <p className="text-sm">
-                        {searchTerm ? 'Try adjusting your search terms.' : `Click "Add ${getTabTitle().slice(0, -1)}" to create one.`}
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="overflow-x-auto border border-gray-200 rounded-lg">
-                        {renderTable()}
-                      </div>
-                      <PaginationComponent />
-                    </>
-                  )}
-                </div>
-              </>
             )}
+
+            {/* Main Content */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+              {/* Mobile Tab Selector */}
+              <div className="block sm:hidden border-b border-gray-100 p-6">
+                <select
+                  value={activeTab}
+                  onChange={(e) => {
+                    setActiveTab(e.target.value);
+                    setMessage('');
+                    setSearchTerm('');
+                  }}
+                  className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                >
+                  {tabs.map((tab) => (
+                    <option key={tab.id} value={tab.id}>
+                      {tab.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Desktop Tabs */}
+              <div className="hidden sm:block border-b border-gray-100">
+                <nav className="flex space-x-8 px-6">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          setActiveTab(tab.id);
+                          setMessage('');
+                          setSearchTerm('');
+                        }}
+                        className={`py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-all duration-200 ${
+                          activeTab === tab.id
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Header with Search and Add Button */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0 mb-6">
+                  <div className="flex-1 max-w-md">
+                    <div className="relative">
+                      <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder={`Search ${getTabTitle().toLowerCase()}...`}
+                        className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      />
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={handleCreate}
+                    className="inline-flex items-center px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-800 transition-all duration-200 shadow-sm hover:shadow-md"
+                  >
+                    <PlusIcon className="w-5 h-5 mr-2" />
+                    Add {getTabTitle().slice(0, -1)}
+                  </button>
+                </div>
+
+                {/* Loading State */}
+                {loading ? (
+                  <SkeletonTheme baseColor="#f8f9fa" highlightColor="#e9ecef">
+                    <div>
+                      <div className="block lg:hidden">
+                        <MobileCardSkeleton />
+                      </div>
+                      <div className="hidden lg:block">
+                        <TableSkeleton />
+                      </div>
+                      
+                      <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0 mt-6 pt-6 border-t border-gray-100">
+                        <Skeleton height={20} width={200} />
+                        <div className="flex items-center space-x-4">
+                          <Skeleton height={40} width={100} />
+                          <div className="flex items-center space-x-2">
+                            {[...Array(5)].map((_, i) => (
+                              <Skeleton key={i} height={40} width={40} className="rounded-xl" />
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </SkeletonTheme>
+                ) : (
+                  <>
+                    {/* Mobile Cards */}
+                    <div className="block lg:hidden space-y-4">
+                      {currentData.length === 0 ? (
+                        <div className="text-center py-12">
+                          <div className="w-16 h-16 mx-auto bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+                            <div className="text-2xl">📋</div>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">No {getTabTitle().toLowerCase()} found</h3>
+                          <p className="text-gray-500 mb-4">
+                            {searchTerm ? 'Try adjusting your search terms.' : `Click "Add ${getTabTitle().slice(0, -1)}" to create one.`}
+                          </p>
+                          {!searchTerm && (
+                            <button
+                              onClick={handleCreate}
+                              className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-200"
+                            >
+                              <PlusIcon className="w-4 h-4 mr-2" />
+                              Add {getTabTitle().slice(0, -1)}
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          {currentData.map((item) => renderMobileCard(item))}
+                          <PaginationComponent />
+                        </>
+                      )}
+                    </div>
+
+                    {/* Desktop Table */}
+                    <div className="hidden lg:block">
+                      {currentData.length === 0 ? (
+                        <div className="text-center py-12">
+                          <div className="w-16 h-16 mx-auto bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+                            <div className="text-2xl">📋</div>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">No {getTabTitle().toLowerCase()} found</h3>
+                          <p className="text-gray-500 mb-4">
+                            {searchTerm ? 'Try adjusting your search terms.' : `Click "Add ${getTabTitle().slice(0, -1)}" to create one.`}
+                          </p>
+                          {!searchTerm && (
+                            <button
+                              onClick={handleCreate}
+                              className="inline-flex items-center px-4 py-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-200"
+                            >
+                              <PlusIcon className="w-4 h-4 mr-2" />
+                              Add {getTabTitle().slice(0, -1)}
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          <div className="overflow-x-auto border border-gray-100 rounded-2xl">
+                            {renderTable()}
+                          </div>
+                          <PaginationComponent />
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h3 className="text-lg font-semibold text-gray-900">
                 {editingItem ? 'Edit' : 'Add New'} {getTabTitle().slice(0, -1)}
               </h3>
@@ -1071,9 +950,9 @@ const AdmissionSetting = () => {
                   setShowModal(false);
                   setMessage('');
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="p-1 rounded-lg hover:bg-gray-100 transition-colors duration-150"
               >
-                <XMarkIcon className="w-5 h-5" />
+                <XMarkIcon className="w-6 h-6 text-gray-400" />
               </button>
             </div>
             
@@ -1086,14 +965,14 @@ const AdmissionSetting = () => {
                     setShowModal(false);
                     setMessage('');
                   }}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-3 border border-gray-200 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                 >
                   {submitting ? 'Saving...' : 'Save'}
                 </button>

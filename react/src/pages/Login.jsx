@@ -77,8 +77,12 @@ const Login = () => {
         <div className="absolute inset-0 bg-white/10 backdrop-blur-[1px]"></div>
         
         <div className="relative z-10">
-          {/* Header */}
-          <div className="sm:mx-auto sm:w-full sm:max-w-md">
+
+          {/* Login Form */}
+          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            
+            <div className="bg-white/95 backdrop-blur-sm py-8 px-4 shadow-2xl sm:rounded-xl sm:px-10 border border-gray-200/50">
+                      <div className="sm:mx-auto sm:w-full sm:max-w-md">
             <div className="flex justify-center">
               <div className="w-20 h-20 rounded-4xl flex items-center justify-center shadow-lg bg-white/90 backdrop-blur-sm">
                 <img
@@ -89,22 +93,17 @@ const Login = () => {
               </div>
             </div>
             <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-              CAS Billing System
+              Billing System
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
               Welcome back! Please sign in to continue
             </p>
           </div>
-
-          {/* Login Form */}
-          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-            <div className="bg-white/95 backdrop-blur-sm py-8 px-4 shadow-2xl sm:rounded-xl sm:px-10 border border-gray-200/50">
+          <br />
               <form className="space-y-6" onSubmit={handleSubmit}>
                 {/* Username/Email Field */}
                 <div>
-                  <label htmlFor="login" className="block text-sm font-medium text-gray-700">
-                    Username or Email
-                  </label>
+
                   <div className="mt-1">
                     <input
                       id="login"
@@ -123,9 +122,7 @@ const Login = () => {
 
                 {/* Password Field */}
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
+
                   <div className="mt-1 relative">
                     <input
                       id="password"
@@ -246,7 +243,7 @@ const Login = () => {
           {/* Footer */}
           <div className="mt-8 text-center">
             <p className="text-xs text-gray-500">
-              © 2025 ACEMCT Billing System. All rights reserved.
+              © 2025 Allied Care Experts Tuguegarao City. All rights reserved.
             </p>
           </div>
         </div>

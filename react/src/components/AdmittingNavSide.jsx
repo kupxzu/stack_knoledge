@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@context/AuthContext';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
+import Breadcrumb from '@components/Breadcrumb';
 import {
   HomeIcon,
   UserPlusIcon,
@@ -9,120 +10,147 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  UserCircleIcon
+  UserCircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
 } from '@heroicons/react/24/outline';
+
+const sidebarItems = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: HomeIcon,
+    path: '/admitting'
+  },
+  {
+    id: 'admit-patient',
+    label: 'Admit Patient',
+    icon: UserPlusIcon,
+    path: '/admitting/admit-patient'
+  },
+  {
+    id: 'patient-list',
+    label: 'Patient List',
+    icon: ClipboardDocumentListIcon,
+    path: '/admitting/patient-list'
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: Cog6ToothIcon,
+    path: '/admitting/settings'
+  }
+];
 
 const AdmittingNavSide = ({ children }) => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Persist sidebar state in localStorage
+  const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved ? JSON.parse(saved) : false;
+  });
 
-  const sidebarItems = [
-    { 
-      id: 'dashboard', 
-      label: 'Dashboard', 
-      icon: HomeIcon, 
-      path: '/admitting',
-      description: 'Overview and analytics'
-    },
-    { 
-      id: 'admit-patient', 
-      label: 'Admit Patient', 
-      icon: UserPlusIcon, 
-      path: '/admitting/admit-patient',
-      description: 'Register new patient'
-    },
-    { 
-      id: 'patient-list', 
-      label: 'Patient List', 
-      icon: ClipboardDocumentListIcon, 
-      path: '/admitting/patient-list',
-      description: 'Manage existing patients'
-    },
-    { 
-      id: 'settings', 
-      label: 'Settings', 
-      icon: Cog6ToothIcon, 
-      path: '/admitting/settings',
-      description: 'System configuration'
-    },
-  ];
+  // Save sidebar state to localStorage
+  useEffect(() => {
+    localStorage.setItem('sidebar-collapsed', JSON.stringify(isDesktopCollapsed));
+  }, [isDesktopCollapsed]);
 
-  const getActiveItem = () => {
-    const currentItem = sidebarItems.find(item => item.path === location.pathname);
-    return currentItem?.id || 'dashboard';
-  };
-
-  const closeMobileMenu = () => {
+  // Close mobile menu on route change
+  useEffect(() => {
     setIsMobileMenuOpen(false);
+  }, [location.pathname]);
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
+  const getActiveItem = () =>
+    sidebarItems.find(item => item.path === location.pathname)?.id || 'dashboard';
+
+  const NavLink = ({ item, onClick, isCollapsed = false, isMobile = false }) => {
+    const Icon = item.icon;
+    const isActive = getActiveItem() === item.id;
+    
+    return (
+      <Link
+        to={item.path}
+        onClick={onClick}
+        className={`
+          group relative flex items-center rounded-2xl transition-all duration-150 ease-out
+          ${isMobile 
+            ? 'px-4 py-4 text-base font-medium' 
+            : `px-4 py-3.5 text-sm font-medium ${isCollapsed ? 'justify-center' : ''}`
+          }
+          ${isActive 
+            ? 'text-gray-900 bg-gradient-to-r from-gray-100 to-gray-50 shadow-sm border border-gray-200/50' 
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/80 border border-transparent'
+          }
+        `}
+        title={isCollapsed ? item.label : ''}
+      >
+        <div className={`flex items-center justify-center rounded-xl transition-all duration-150 ${
+          isActive ? 'bg-white shadow-sm' : 'group-hover:bg-white/50'
+        } ${isCollapsed ? 'p-2' : 'p-2 mr-3'}`}>
+          <Icon className={`transition-all duration-150 ${
+            isMobile ? 'w-5 h-5' : 'w-5 h-5'
+          } ${
+            isActive ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700'
+          }`} />
+        </div>
+        
+        <span className={`transition-all duration-200 font-medium ${
+          isCollapsed && !isMobile ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+        }`}>
+          {item.label}
+        </span>
+        
+        {isActive && !isCollapsed && (
+          <div className="absolute right-4 w-2 h-2 bg-gray-900 rounded-full" />
+        )}
+      </Link>
+    );
   };
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Logo/Brand */}
-      <div className="px-6 py-6 border-b border-gray-100">
-        <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">C</span>
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">CAS</h1>
-            <p className="text-xs text-gray-500">Admitting Portal</p>
-          </div>
-        </div>
+  const UserProfile = ({ isCollapsed = false, isMobile = false }) => (
+    <div className={`transition-all duration-200 ${
+      isCollapsed && !isMobile ? 'flex justify-center' : 'flex items-center space-x-3'
+    }`}>
+      <div className={`bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center transition-all duration-150 hover:shadow-sm ${
+        isMobile ? 'w-12 h-12' : 'w-10 h-10'
+      }`}>
+        <UserCircleIcon className={`text-gray-600 ${isMobile ? 'w-7 h-7' : 'w-6 h-6'}`} />
       </div>
-      
-      {/* Navigation */}
-      <nav className="flex-1 px-4 py-4 space-y-1">
-        {sidebarItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = getActiveItem() === item.id;
-          
-          return (
-            <Link
-              key={item.id}
-              to={item.path}
-              onClick={closeMobileMenu}
-              className={`group flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                isActive 
-                  ? 'bg-blue-50 text-blue-700 border border-blue-100' 
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
-              }`}
-            >
-              <Icon className={`w-5 h-5 mr-3 flex-shrink-0 transition-colors duration-200 ${
-                isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
-              }`} />
-              <div className="flex-1 min-w-0">
-                <div className="truncate">{item.label}</div>
-                <div className={`text-xs truncate transition-colors duration-200 ${
-                  isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
-                }`}>
-                  {item.description}
-                </div>
-              </div>
-              {isActive && (
-                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* User Profile Section */}
-      <div className="px-4 py-4 border-t border-gray-100">
-        <div className="flex items-center space-x-3 px-3 py-3 rounded-xl bg-gray-50">
-          <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
-            <UserCircleIcon className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-gray-900 truncate">
-              {user?.name || 'User'}
-            </div>
-            <div className="text-xs text-gray-500 truncate">
-              {user?.role || 'Staff'} • Online
-            </div>
-          </div>
+      <div className={`transition-all duration-200 ${
+        isCollapsed && !isMobile ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100'
+      }`}>
+        <div className={`font-semibold text-gray-900 ${isMobile ? 'text-lg' : 'text-sm'}`}>
+          {user?.name || 'User'}
+        </div>
+        <div className={`text-gray-500 ${isMobile ? 'text-base' : 'text-xs'}`}>
+          {user?.role || 'Staff'}
         </div>
       </div>
     </div>
@@ -134,148 +162,166 @@ const AdmittingNavSide = ({ children }) => {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div 
-            className="fixed inset-0 bg-gray-900/20 backdrop-blur-sm" 
-            onClick={() => setIsMobileMenuOpen(false)} 
+            className="fixed inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-200" 
+            onClick={() => setIsMobileMenuOpen(false)}
           />
-          <div className="fixed inset-y-0 left-0 w-72 bg-white shadow-2xl">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">C</span>
-                </div>
-                <div>
-                  <h1 className="text-lg font-semibold text-gray-900">CAS</h1>
-                  <p className="text-xs text-gray-500">Admitting Portal</p>
-                </div>
+          <div className="fixed inset-y-0 left-0 bg-white shadow-2xl transform transition-all duration-200 w-full max-w-xs sm:max-w-sm">
+            {/* Mobile header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100/80">
+              <div className="flex items-center">
+                <img 
+                  src="/ace-banner.png" 
+                  alt="ACE Logo" 
+                  className="h-16 w-auto transition-transform duration-150 hover:scale-105"
+                />
               </div>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-xl hover:bg-gray-100 transition-all duration-150"
               >
-                <XMarkIcon className="w-5 h-5 text-gray-400" />
+                <XMarkIcon className="w-5 h-5 text-gray-500" />
               </button>
             </div>
             
-            <div className="flex flex-col h-full">
-              <nav className="flex-1 px-4 py-4 space-y-1">
-                {sidebarItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = getActiveItem() === item.id;
-                  
-                  return (
-                    <Link
-                      key={item.id}
-                      to={item.path}
-                      onClick={closeMobileMenu}
-                      className={`group flex items-center px-3 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                        isActive 
-                          ? 'bg-blue-50 text-blue-700 border border-blue-100' 
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
-                      }`}
-                    >
-                      <Icon className={`w-5 h-5 mr-3 flex-shrink-0 transition-colors duration-200 ${
-                        isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <div className="truncate">{item.label}</div>
-                        <div className={`text-xs truncate transition-colors duration-200 ${
-                          isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
-                        }`}>
-                          {item.description}
-                        </div>
-                      </div>
-                      {isActive && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-                      )}
-                    </Link>
-                  );
-                })}
-              </nav>
-
-              {/* Mobile User Profile */}
-              <div className="px-4 py-4 border-t border-gray-100">
-                <div className="flex items-center space-x-3 px-3 py-3 rounded-xl bg-gray-50">
-                  <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
-                    <UserCircleIcon className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {user?.name || 'User'}
-                    </div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {user?.role || 'Staff'} • Online
-                    </div>
-                  </div>
+            {/* Mobile navigation */}
+            <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
+              {sidebarItems.map((item, index) => (
+                <div 
+                  key={item.id}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  className="animate-in slide-in-from-left duration-300"
+                >
+                  <NavLink 
+                    item={item} 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    isMobile={true}
+                  />
                 </div>
-              </div>
+              ))}
+            </nav>
+            
+            {/* Mobile user section */}
+            <div className="p-6 border-t border-gray-100/80 mt-auto">
+              <UserProfile isMobile={true} />
             </div>
           </div>
         </div>
       )}
 
-      <div className="flex">
+      <div className="flex min-h-screen">
         {/* Desktop sidebar */}
-        <aside className="hidden lg:flex lg:flex-col lg:w-72 lg:fixed lg:inset-y-0 bg-white border-r border-gray-100">
-          <SidebarContent />
+        <aside className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 bg-white/80 backdrop-blur-xl border-r border-gray-200/50 transition-all duration-300 z-30 ${
+          isDesktopCollapsed ? 'lg:w-20' : 'lg:w-72'
+        }`}>
+          {/* Desktop logo section */}
+          <div className={`flex items-center px-6 py-8 transition-all duration-300 ${
+            isDesktopCollapsed ? 'justify-center px-4' : ''
+          }`}>
+            <div className="flex items-center">
+              <img 
+                src={isDesktopCollapsed ? "/ace-logo.png" : "/ace-banner.png"}
+                alt="ACE Logo" 
+                className={`transition-all duration-300 ${
+                  isDesktopCollapsed 
+                    ? 'h-10 w-10 object-contain' 
+                    : 'h-19 w-auto max-w-full object-contain'
+                }`}
+              />
+            </div>
+          </div>
+          
+          {/* Desktop navigation */}
+          <nav className={`flex-1 space-y-2 transition-all duration-300 overflow-y-auto ${
+            isDesktopCollapsed ? 'px-4' : 'px-6'
+          }`}>
+            {sidebarItems.map(item => (
+              <NavLink key={item.id} item={item} isCollapsed={isDesktopCollapsed} />
+            ))}
+          </nav>
+          
+          {/* Desktop user section */}
+          <div className={`border-t border-gray-200/50 transition-all duration-300 ${
+            isDesktopCollapsed ? 'p-4' : 'p-6'
+          }`}>
+            <UserProfile isCollapsed={isDesktopCollapsed} />
+          </div>
         </aside>
 
         {/* Main content */}
-        <div className="flex-1 lg:ml-72">
-          {/* Top header */}
-          <header className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-40">
-            <div className="flex items-center justify-between h-16 px-4 sm:px-6">
-              <div className="flex items-center space-x-4">
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${
+          isDesktopCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+        }`}>
+          {/* Header */}
+          <header className="bg-white/90 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-40">
+            <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center space-x-4 min-w-0 flex-1">
+                {/* Mobile burger menu */}
                 <button
                   onClick={() => setIsMobileMenuOpen(true)}
-                  className="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 lg:hidden transition-colors"
+                  className="p-2 rounded-xl text-gray-500 hover:text-gray-700 lg:hidden transition-all duration-150 hover:bg-gray-100/80"
                 >
-                  <Bars3Icon className="w-6 h-6" />
+                  <Bars3Icon className="w-5 h-5" />
                 </button>
                 
-                <div className="hidden lg:block">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                {/* Desktop burger menu for collapse/expand */}
+                <button
+                  onClick={() => setIsDesktopCollapsed(!isDesktopCollapsed)}
+                  className="hidden lg:flex p-2 rounded-xl text-gray-500 hover:text-gray-700 transition-all duration-150 hover:bg-gray-100/80"
+                >
+                  {isDesktopCollapsed ? (
+                    <ChevronRightIcon className="w-5 h-5" />
+                  ) : (
+                    <ChevronLeftIcon className="w-5 h-5" />
+                  )}
+                </button>
+                
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg font-semibold text-gray-900 truncate">
                     {sidebarItems.find(item => item.id === getActiveItem())?.label || 'Dashboard'}
-                  </h2>
-                  <p className="text-sm text-gray-500">
-                    {sidebarItems.find(item => item.id === getActiveItem())?.description || 'Welcome back'}
-                  </p>
+                  </h1>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-3">
-                {/* Mobile user info */}
-                <div className="lg:hidden flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
-                    <UserCircleIcon className="w-5 h-5 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-gray-900">{user?.name}</span>
-                </div>
-
+              <div className="flex items-center space-x-4 flex-shrink-0">
                 {/* Desktop user info */}
                 <div className="hidden lg:flex items-center space-x-3">
                   <div className="text-right">
-                    <div className="text-sm font-medium text-gray-900">{user?.name}</div>
-                    <div className="text-xs text-gray-500">{user?.role} • Online</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {user?.name}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {user?.role}
+                    </div>
                   </div>
-                  <div className="w-8 h-8 bg-gradient-to-br from-gray-400 to-gray-500 rounded-full flex items-center justify-center">
-                    <UserCircleIcon className="w-5 h-5 text-white" />
+                  <div className="w-10 h- bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center transition-all duration-150 hover:shadow-sm">
+                    <UserCircleIcon className="w-6 h-6 text-gray-600" />
                   </div>
+                </div>
+
+                {/* Mobile user avatar */}
+                <div className="lg:hidden w-9 h-9 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center">
+                  <UserCircleIcon className="w-5 h-5 text-gray-600" />
                 </div>
 
                 <button
                   onClick={logout}
-                  className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 border border-red-200 hover:border-red-300 transition-all duration-200"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-2xl border border-gray-200/80 hover:border-gray-300 transition-all duration-150 hover:bg-gray-50/80 hover:shadow-sm"
                 >
-                  <ArrowRightOnRectangleIcon className="w-4 h-4 mr-2" />
-                  <span className="hidden sm:block">Logout</span>
+                  <ArrowRightOnRectangleIcon className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Logout</span>
                 </button>
               </div>
+            </div>
+            
+            {/* Breadcrumb */}
+            <div className="px-4 sm:px-6 lg:px-8 py-3 border-t border-gray-100/50">
+              <Breadcrumb />
             </div>
           </header>
 
           {/* Page content */}
-          <main className="min-h-screen bg-gray-50">
-            <div className="p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 bg-gray-50 min-h-0">
+            <div className="p-4 lg:p-8 h-full">
               {children}
             </div>
           </main>

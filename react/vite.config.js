@@ -2,28 +2,18 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
-import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
+// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss({
-      config: {
-        content: ['./src/**/*.{js,jsx,ts,tsx}'],
-        theme: {
-          extend: {},
-        },
-        plugins: [],
-      },
-    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'CAS Billing System',
-        short_name: 'CAS Billing',
-        description: 'CAS Billing System - Patient Management & Billing',
+        name: 'ACEMCT Billing System',
+        short_name: 'ACEMCT Billing',
+        description: 'ACEMCT Billing System - Patient Management & Billing',
         theme_color: '#2563eb',
         background_color: '#ffffff',
         display: 'standalone',
@@ -39,21 +29,15 @@ export default defineConfig({
           {
             src: 'pwa-512x512.png',
             sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
           }
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,jpg,svg}'],
         runtimeCaching: [
           {
-            // Match any localhost or a.view domain with any port
             urlPattern: /^https?:\/\/(localhost|127\.0\.0\.1|a\.view):?\d*\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
@@ -68,7 +52,6 @@ export default defineConfig({
             }
           },
           {
-            // Catch-all for any API endpoints
             urlPattern: /\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
@@ -87,14 +70,14 @@ export default defineConfig({
     })
   ],
   server: {
-    host: '0.0.0.0', // Allow access from any IP
-    port: 3000, // Default port for React dev server
-    strictPort: false, // Allow fallback to other ports if 3000 is busy
-    cors: true, // Enable CORS for all origins
+    host: '0.0.0.0',
+    port: 3000,
+    strictPort: false,
+    cors: true,
   },
   preview: {
-    host: '0.0.0.0', // Allow access from any IP in preview mode
-    port: 4173, // Default preview port
+    host: '0.0.0.0',
+    port: 4173,
     strictPort: false,
     cors: true,
   },
