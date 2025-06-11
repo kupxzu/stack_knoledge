@@ -169,7 +169,7 @@ const PatientPortal = () => {
               {
 }
               <img
-                src="/ace-banner.jpg"
+                src="/ace-banner.png"
                 alt="ACE Medical Center"
                 className="hidden md:block h-16 w-auto animate-fade-in"
                 onError={(e) => {
